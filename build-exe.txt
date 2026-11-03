@@ -1,9 +1,16 @@
 node --version
 npm install node-cron
 npm install -g esbuild
-esbuild scheduler.js --bundle --platform=node --outfile=bundle.js
+esbuild index.js --bundle --platform=node --outfile=bundle.js
 
 Set-Content sea-config.json '{ "main": "bundle.js", "output": "sea-prep.blob" }'
+node --experimental-sea-config sea-config.json
+node -e "require('fs').copyFileSync(process.execPath, 'uivision-scheduler.exe')"
+npx postject uivision-scheduler.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+//build ulang
+Remove-Item uivision-scheduler.exe, bundle.js, sea-prep.blob -ErrorAction SilentlyContinue
+esbuild index.js --bundle --platform=node --outfile=bundle.js
 node --experimental-sea-config sea-config.json
 node -e "require('fs').copyFileSync(process.execPath, 'uivision-scheduler.exe')"
 npx postject uivision-scheduler.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2

@@ -2027,7 +2027,7 @@ var path = require("path");
 var isExe = path.basename(process.execPath).toLowerCase() !== "node.exe";
 var BASE_DIR = isExe ? path.dirname(process.execPath) : __dirname;
 var defaults = {
-  macroName: "fomo_scanner_v3",
+  macroName: "fomo_scanner",
   uivisionHtml: "file:///C:/coding/uivision-cron/uivision.html",
   timezone: "Asia/Jakarta",
   schedule: "*/5 * * * *",
