@@ -2032,7 +2032,8 @@ var defaults = {
   timezone: "Asia/Jakarta",
   schedule: "*/5 * * * *",
   killWaitMs: 3e3,
-  killChrome: true
+  killChrome: true,
+  runOnStart: true
 };
 var cfg = { ...defaults };
 var configPath = path.join(BASE_DIR, "config.json");
@@ -2095,4 +2096,10 @@ console.log(`   Jadwal : ${cfg.schedule}`);
 console.log(`   HTML   : ${cfg.uivisionHtml}`);
 console.log(`   Zona   : ${cfg.timezone}`);
 console.log(`   Kill Chrome: ${cfg.killChrome ? "ya" : "tidak"}`);
+console.log(`   Run saat start: ${cfg.runOnStart ? "ya" : "tidak"}`);
 console.log("=".repeat(50));
+if (cfg.runOnStart) {
+  console.log(`
+[${nowWIB()}] [STARTUP] ${cfg.macroName}`);
+  runUivision(cfg.macroName);
+}

@@ -15,6 +15,7 @@ const defaults = {
     schedule: '*/5 * * * *',
     killWaitMs: 3000,
     killChrome: true,
+    runOnStart: true,
 };
 
 let cfg = { ...defaults };
@@ -86,4 +87,11 @@ console.log(`   Jadwal : ${cfg.schedule}`);
 console.log(`   HTML   : ${cfg.uivisionHtml}`);
 console.log(`   Zona   : ${cfg.timezone}`);
 console.log(`   Kill Chrome: ${cfg.killChrome ? 'ya' : 'tidak'}`);
+console.log(`   Run saat start: ${cfg.runOnStart ? 'ya' : 'tidak'}`);
 console.log('='.repeat(50));
+
+// Jalankan sekali langsung saat start, run berikutnya tetap mengikuti cron
+if (cfg.runOnStart) {
+    console.log(`\n[${nowWIB()}] [STARTUP] ${cfg.macroName}`);
+    runUivision(cfg.macroName);
+}
