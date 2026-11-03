@@ -1,22 +1,44 @@
 const cron = require('node-cron');
 const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
-// Konfigurasi
-const MACRO_NAME = 'fomo_scanner_v3';
-const UIVISION_HTML = 'file:///C:/coding/uivision-cron/uivision.html';
-const TIMEZONE = 'Asia/Jakarta';
-const KILL_WAIT_MS = 3000; // jeda setelah kill sebelum buka Chrome baru
+// Folder tempat exe berada. Kalau dijalankan lewat "node index.js", pakai folder script.
+const isExe = path.basename(process.execPath).toLowerCase() !== 'node.exe';
+const BASE_DIR = isExe ? path.dirname(process.execPath) : __dirname;
 
-function nowWIB() {
-    return new Date().toLocaleString('id-ID', { timeZone: TIMEZONE });
+// Nilai bawaan kalau config.json tidak ada atau ada key yang kosong
+const defaults = {
+    macroName: 'fomo_scanner_v3',
+    uivisionHtml: 'file:///C:/coding/uivision-cron/uivision.html',
+    timezone: 'Asia/Jakarta',
+    schedule: '*/5 * * * *',
+    killWaitMs: 3000,
+    killChrome: true,
+};
+
+let cfg = { ...defaults };
+const configPath = path.join(BASE_DIR, 'config.json');
+try {
+    cfg = { ...defaults, ...JSON.parse(fs.readFileSync(configPath, 'utf-8')) };
+    console.log(`Config dibaca dari: ${configPath}`);
+} catch (e) {
+    console.log(`config.json tidak ditemukan/rusak di ${configPath}, pakai nilai bawaan`);
 }
 
-// Matikan semua proses Chrome (termasuk UI.Vision yang berjalan sebagai ekstensi di dalamnya)
+if (!cron.validate(cfg.schedule)) {
+    console.error(`Format cron tidak valid: "${cfg.schedule}"`);
+    process.exit(1);
+}
+
+function nowWIB() {
+    return new Date().toLocaleString('id-ID', { timeZone: cfg.timezone });
+}
+
 function killChrome() {
     return new Promise((resolve) => {
-        exec('taskkill /F /IM chrome.exe /T', (error, stdout, stderr) => {
+        exec('taskkill /F /IM chrome.exe /T', (error) => {
             if (error) {
-                // Kode error 128 = tidak ada proses chrome yang berjalan, itu normal
                 if (error.code === 128) {
                     console.log(`[${nowWIB()}] Tidak ada Chrome yang berjalan`);
                 } else {
@@ -25,19 +47,17 @@ function killChrome() {
             } else {
                 console.log(`[${nowWIB()}] Chrome lama dimatikan`);
             }
-            setTimeout(resolve, KILL_WAIT_MS);
+            setTimeout(resolve, cfg.killWaitMs);
         });
     });
 }
 
 async function runUivision(macroName) {
-    // 1. Pastikan Chrome lama sudah mati
-    await killChrome();
+    if (cfg.killChrome) await killChrome();
 
     console.log(`[${nowWIB()}] >>> MENJALANKAN: ${macroName} <<<`);
 
-    // 2. Buka Chrome baru
-    const url = `${UIVISION_HTML}?macro=${macroName}&direct=1&closeRPA=1&closeBrowser=1&storage=xfile`;
+    const url = `${cfg.uivisionHtml}?macro=${macroName}&direct=1&closeRPA=1&closeBrowser=1&storage=xfile`;
     const flags = [
         '--new-window',
         '--start-maximized',
@@ -45,24 +65,25 @@ async function runUivision(macroName) {
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
         '--disable-background-timer-throttling',
+        '--disable-session-crashed-bubble',
+        '--hide-crash-restore-bubble',
     ].join(' ');
 
     exec(`start chrome ${flags} "${url}"`, (error) => {
-        if (error) {
-            console.error(`[${nowWIB()}] Error menjalankan ${macroName}:`, error.message);
-        }
+        if (error) console.error(`[${nowWIB()}] Error menjalankan ${macroName}:`, error.message);
     });
 }
 
-// Setiap 5 menit: menit ke 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55
-cron.schedule('0,5,10,15,20,25,30,35,40,45,50,55 * * * *', () => {
-    console.log(`\n[${nowWIB()}] [JADWAL] ${MACRO_NAME}`);
-    runUivision(MACRO_NAME);
-}, { timezone: TIMEZONE });
+cron.schedule(cfg.schedule, () => {
+    console.log(`\n[${nowWIB()}] [JADWAL] ${cfg.macroName}`);
+    runUivision(cfg.macroName);
+}, { timezone: cfg.timezone });
 
 console.log('='.repeat(50));
 console.log('✅ SCHEDULER AKTIF');
-console.log(`   Macro  : ${MACRO_NAME}`);
-console.log('   Jadwal : tiap 5 menit (menit 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55)');
-console.log(`   Zona   : ${TIMEZONE}`);
+console.log(`   Macro  : ${cfg.macroName}`);
+console.log(`   Jadwal : ${cfg.schedule}`);
+console.log(`   HTML   : ${cfg.uivisionHtml}`);
+console.log(`   Zona   : ${cfg.timezone}`);
+console.log(`   Kill Chrome: ${cfg.killChrome ? 'ya' : 'tidak'}`);
 console.log('='.repeat(50));

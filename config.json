@@ -1,0 +1,8 @@
+{
+  "macroName": "fomo_scanner_v3",
+  "uivisionHtml": "file:///C:/coding/uivision-cron/uivision.html",
+  "timezone": "Asia/Jakarta",
+  "schedule": "*/5 * * * *",
+  "killWaitMs": 3000,
+  "killChrome": true
+}

@@ -70,7 +70,7 @@
     },
     {
       "Command": "store",
-      "Target": "2",
+      "Target": "0",
       "Value": "MAX_LOOP",
       "Description": "Batas jumlah siklus scan total (ada sell/AD atau tidak tetap dihitung). 0 = jalan terus tanpa henti"
     },
