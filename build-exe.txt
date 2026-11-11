@@ -1,16 +1,53 @@
+BUILD EXE (Windows PowerShell, jalankan di folder project)
+==========================================================
+Ada 2 exe:
+  1. uivision-scheduler.exe  -> scheduler lama (UI.Vision + cron), dari index.js, config: config.json
+  2. fomo-pw.exe             -> versi Playwright, dari pw/index.js, config: pw.config.json
+
+Exe dibuat dengan Node SEA: isinya node.exe + kode yang di-bundle esbuild.
+Node yang dipakai untuk build harus versi yang sama dengan yang ingin dipakai exe-nya.
+
+
+PERSIAPAN (sekali saja)
+-----------------------
 node --version
-npm install node-cron
+npm install
 npm install -g esbuild
-esbuild index.js --bundle --platform=node --outfile=bundle.js
 
-Set-Content sea-config.json '{ "main": "bundle.js", "output": "sea-prep.blob" }'
-node --experimental-sea-config sea-config.json
-node -e "require('fs').copyFileSync(process.execPath, 'uivision-scheduler.exe')"
-npx postject uivision-scheduler.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
-//build ulang
+1. uivision-scheduler.exe (UI.Vision)
+-------------------------------------
 Remove-Item uivision-scheduler.exe, bundle.js, sea-prep.blob -ErrorAction SilentlyContinue
 esbuild index.js --bundle --platform=node --outfile=bundle.js
 node --experimental-sea-config sea-config.json
 node -e "require('fs').copyFileSync(process.execPath, 'uivision-scheduler.exe')"
 npx postject uivision-scheduler.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+Kebutuhan saat dijalankan (taruh di folder yang sama dengan exe):
+  - config.json
+  - uivision.html (sesuai path "uivisionHtml" di config.json)
+
+
+2. fomo-pw.exe (Playwright)
+---------------------------
+Remove-Item fomo-pw.exe, bundle-pw.js, sea-pw.blob -ErrorAction SilentlyContinue
+esbuild pw/index.js --bundle --platform=node --external:playwright-core --outfile=bundle-pw.js
+node --experimental-sea-config sea-pw.json
+node -e "require('fs').copyFileSync(process.execPath, 'fomo-pw.exe')"
+npx postject fomo-pw.exe NODE_SEA_BLOB sea-pw.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+Kebutuhan saat dijalankan (taruh di folder yang sama dengan exe):
+  - pw.config.json
+  - node_modules\playwright-core   (tidak bisa dimasukkan ke exe, hasil "npm install")
+  - Google Chrome terpasang (path di pw.config.json -> browser.chromePath)
+
+Pemakaian:
+  fomo-pw.exe          jalankan scanner sesuai jadwal di pw.config.json
+  fomo-pw.exe login    login ke fomo.family (sekali saja), lalu tutup jendela Chrome
+
+
+Catatan
+-------
+- Peringatan "The signature seems corrupted" dari postject normal, exe tetap bisa dipakai.
+- Jangan jalankan uivision-scheduler.exe dan fomo-pw.exe bersamaan: dua-duanya bertransaksi
+  di akun fomo yang sama.

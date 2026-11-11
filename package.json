@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "pw": "node pw/index.js",
+    "pw:login": "node pw/login.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "node-cron": "^4.6.0"
+    "node-cron": "^4.6.0",
+    "playwright-core": "^1.56.0"
   },
   "repository": {
     "type": "git",
