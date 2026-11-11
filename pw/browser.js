@@ -22,14 +22,14 @@ async function openBrowser(cfg) {
         executablePath: b.chromePath,
         headless: !!b.headless,
         viewport: b.viewport,
-        args: [
-            '--disable-blink-features=AutomationControlled',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-            '--disable-background-timer-throttling',
-            '--no-first-run',
-            '--no-default-browser-check',
-        ],
+        // args: [
+        //     '--disable-blink-features=AutomationControlled',
+        //     '--disable-backgrounding-occluded-windows',
+        //     '--disable-renderer-backgrounding',
+        //     '--disable-background-timer-throttling',
+        //     '--no-first-run',
+        //     '--no-default-browser-check',
+        // ],
         ignoreDefaultArgs: ['--enable-automation'],
     });
     // Gambar tetap dimuat: icon coin dipakai untuk diklik
