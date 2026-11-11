@@ -36,6 +36,8 @@ transaksi yang sedang berjalan diselesaikan dulu, tidak dipotong di tengah seper
 | `adTrigger` | Margin (%) yang memicu cek AD (margin <= nilai ini) | AD_TRIGGER |
 | `adMinAgeH` | Umur coin minimal (jam) untuk AD | AD_MIN_AGE_H |
 | `adUseRsi` / `adRsiMax` | RSI jadi syarat AD / RSI maksimal | AD_USE_RSI / AD_RSI_MAX |
+| `adMinOrderUsd` | Minimum order manual (USD). `0` = otomatis dari tombol "Minimum amount $X" | - |
+| `adBelowMin` | Invested < minimum: `"skip"` = AD dilewati (BUY_MIN_ORDER), `"min"` = beli sebesar minimum | - |
 | `maxLoop` | Batas jumlah siklus, 0 = terus | MAX_LOOP |
 | `scanIntervalMs` | Jeda antar scan kalau tidak ada aksi | SCAN_INTERVAL |
 | `reloadEvery` | Reload profil paksa tiap N scan | RELOAD_EVERY |
@@ -51,5 +53,5 @@ market cap sekarang < avg entry, invested > 0. Nominal buy = invested (1:1). Mak
 
 ## Log (format sama dengan macro)
 - `fomo_positions.csv`: waktu, nama, nominal, margin
-- `fomo_sell_log.csv`: waktu, nama, nominal, margin, hasil (DRY_RUN_STOP / SOLD / SELL_GAGAL / MISMATCH / CLICK_GAGAL)
+- `fomo_sell_log.csv`: waktu, nama, nominal, margin, hasil (DRY_RUN_STOP / SOLD / SELL_GAGAL / MISMATCH / CLICK_GAGAL / SELL_MIN_ORDER)
 - `fomo_ad_log.csv`: waktu, nama, umur(jam), rsi, mc sekarang, mc avg entry, invested, hasil

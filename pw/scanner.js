@@ -45,6 +45,24 @@ class FomoScanner {
         }
     }
 
+    // Bandingkan nama coin tanpa peduli huruf besar/kecil
+    static same(a, b) {
+        return String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+    }
+
+    // Tombol aksi cocok kalau diawali kata kerja (Buy/Sell) dan mengandung nama coin,
+    // contoh "Buy GATO", "Buy 1 GATO", "Sell Gato"
+    static actionMatch(text, verb, name) {
+        const t = String(text ?? '').trim().toLowerCase();
+        return t.startsWith(verb.toLowerCase() + ' ') && t.includes(String(name).trim().toLowerCase());
+    }
+
+    // Teks tombol "Minimum amount $X" (nominal di bawah minimum), null kalau tidak ada.
+    // Nilai minimum berbeda-beda (mis. $0.5 untuk sell, $2 untuk buy), jadi dibaca dari tombol.
+    async minOrderText() {
+        return this.text(this.x(this.sel.minOrderButton), 1500);
+    }
+
     tpFor(name) {
         const v = this.cfg.tpMap[name.toLowerCase()];
         return Number.isFinite(v) ? v : Number(this.cfg.tp);
@@ -60,6 +78,8 @@ class FomoScanner {
     // Scroll sampai jumlah baris tidak bertambah (maks 8 kali). Return null kalau halaman bermasalah.
     async loadAllRows() {
         const rows = this.x(this.sel.row);
+        // tunggu baris pertama muncul (list fomo kadang masih re-render)
+        await rows.first().waitFor({ state: 'attached', timeout: this.cfg.wait.elementTimeoutMs }).catch(() => {});
         let cnt;
         try {
             cnt = await rows.count();
@@ -130,7 +150,16 @@ class FomoScanner {
             flowOk = false;
         }
 
-        if (!(flowOk && finalText === `Sell ${name}`)) {
+        if (!finalText) {
+            const minText = await this.minOrderText();
+            if (minText) {
+                log(`SELL DIBATALKAN: posisi ${name} ($${nominal}) di bawah minimum (${minText})`, 'warn');
+                this.logSell(ts, name, nominal, pct, 'SELL_MIN_ORDER');
+                this.resumeK = k + 1;
+                return;
+            }
+        }
+        if (!(flowOk && FomoScanner.actionMatch(finalText, 'Sell', name))) {
             log(`Coin di popup tidak cocok (${finalText}), sell dibatalkan`, 'err');
             this.logSell(ts, name, nominal, pct, 'MISMATCH');
             this.resumeK = k + 1;
@@ -165,13 +194,29 @@ class FomoScanner {
     // ---------- AD (average down) ----------
     async readRsi() {
         const W = this.cfg.wait;
-        const frame = this.page.frameLocator(this.sel.rsiFrame).first();
-        for (let t = 0; t < W.rsiTries; t++) {
-            const txt = await this.text(frame.locator(`xpath=${this.sel.rsiValue}`), W.rsiTimeoutMs);
-            const n = parseFloat(txt);
-            if (Number.isFinite(n)) return n;
+        const xp = this.sel.rsiValue;
+        // pastikan chart terlihat supaya TradingView merender legend
+        await this.page.locator(this.sel.rsiFrame).first().scrollIntoViewIfNeeded({ timeout: 2000 }).catch(() => {});
+        const deadline = Date.now() + W.rsiTimeoutMs * W.rsiTries;
+        while (Date.now() < deadline) {
+            for (const f of this.page.frames()) {
+                const t = await f.evaluate((q) => {
+                    const n = document.evaluate(q, document, null, 9, null).singleNodeValue;
+                    return n ? n.textContent : null;
+                }, xp).catch(() => null);
+                const n = parseFloat(String(t ?? '').replace(/,/g, ''));
+                if (Number.isFinite(n)) return n;
+            }
             await sleep(1000);
         }
+        // diagnosa: tampilkan legend yang ditemukan supaya selector bisa disesuaikan
+        const found = [];
+        for (const f of this.page.frames()) {
+            const items = await f.evaluate(() => [...document.querySelectorAll('[data-qa-id="legend-source-item"]')]
+                .map((i) => i.innerText.replace(/\s+/g, ' ').slice(0, 80))).catch(() => []);
+            if (items.length) found.push(`[${f.url().slice(0, 50)}] ${items.join(' | ')}`);
+        }
+        log(`RSI tidak terbaca. Jumlah frame: ${this.page.frames().length}. Legend: ${found.join(' || ') || 'tidak ditemukan'}`, 'warn');
         return -1;
     }
 
@@ -189,14 +234,16 @@ class FomoScanner {
             await sleep(W.popupMs);
             const popName = await this.text(this.x(this.sel.popupName), W.elementTimeoutMs);
 
-            if (popName !== name) {
+            if (!FomoScanner.same(popName, name)) {
                 log(`Popup coin tidak cocok (${popName}), AD dibatalkan`, 'err');
             } else {
                 try {
                     await this.x(this.sel.popupIcon).first().click({ timeout: W.elementTimeoutMs });
                 } catch { /* lanjut, pembacaan detail akan gagal kalau halaman tidak terbuka */ }
                 await sleep(W.detailMs);
-                await this.x(this.sel.detailMarketCap).first().waitFor({ timeout: W.elementTimeoutMs }).catch(() => {});
+                for (const s of [this.sel.detailMarketCap, this.sel.detailInvested, this.sel.detailAvgEntry]) {
+                    await this.x(s).first().waitFor({ timeout: W.elementTimeoutMs }).catch(() => {});
+                }
 
                 d.ageH = ageHours(await this.text(this.x(this.sel.detailAge), 3000));
                 d.mcNow = money(await this.text(this.x(this.sel.detailMarketCap), 3000));
@@ -231,30 +278,71 @@ class FomoScanner {
 
     async buyAd(name, d) {
         const W = this.cfg.wait;
+        const minUsd = Number(this.cfg.adMinOrderUsd) || 0;
+
+        // Nominal AD = invested (1:1). Di bawah minimum order: dilewati atau dinaikkan ke minimum
+        let amount = d.invested;
+        if (minUsd > 0 && amount < minUsd) {
+            if (this.cfg.adBelowMin === 'min') {
+                log(`Nominal AD ${name} $${amount} < minimum $${minUsd}, dinaikkan ke $${minUsd}`, 'warn');
+                amount = minUsd;
+            } else {
+                log(`AD ${name} dilewati: nominal $${amount} di bawah minimum order $${minUsd}`, 'warn');
+                d.result = 'BUY_MIN_ORDER';
+                return;
+            }
+        }
+        d.buyAmount = amount;
+
         let buyText = null;
         let flowOk = true;
         try {
-            await this.x(this.sel.buyInput).first().fill(String(d.invested), { timeout: W.elementTimeoutMs });
+            await this.x(this.sel.buyInput).first().fill(String(amount), { timeout: W.elementTimeoutMs });
             await sleep(1000);
             buyText = await this.text(this.x(this.sel.buyButton), W.elementTimeoutMs);
         } catch {
             flowOk = false;
         }
 
-        if (!(flowOk && buyText === `Buy ${name}`)) {
+        if (!buyText) {
+            const minText = await this.minOrderText();
+            if (minText) {
+                const minVal = money(minText); // "Minimum amount $2" -> 2
+                if (this.cfg.adBelowMin === 'min' && minVal > amount) {
+                    log(`Nominal AD ${name} $${amount} < minimum $${minVal} (dari tombol), dinaikkan ke $${minVal}`, 'warn');
+                    amount = minVal;
+                    d.buyAmount = amount;
+                    try {
+                        await this.x(this.sel.buyInput).first().fill(String(amount), { timeout: W.elementTimeoutMs });
+                        await sleep(1000);
+                        buyText = await this.text(this.x(this.sel.buyButton), W.elementTimeoutMs);
+                        flowOk = true;
+                    } catch {
+                        flowOk = false;
+                    }
+                }
+                if (!buyText) {
+                    log(`AD ${name} dibatalkan: nominal $${amount} di bawah minimum (${minText})`, 'warn');
+                    d.result = 'BUY_MIN_ORDER';
+                    return;
+                }
+            }
+        }
+
+        if (!(flowOk && FomoScanner.actionMatch(buyText, 'Buy', name))) {
             log(`Tombol buy tidak cocok (${buyText}), AD dibatalkan`, 'err');
             d.result = 'BUY_MISMATCH';
             return;
         }
         if (this.cfg.dryRunAd) {
-            log(`DRY RUN: berhenti sebelum klik '${buyText}' (nominal ${d.invested})`, 'warn');
+            log(`DRY RUN: berhenti sebelum klik '${buyText}' (nominal ${amount})`, 'warn');
             d.result = 'DRY_RUN_STOP';
             return;
         }
         try {
             await this.x(this.sel.buyButton).first().click({ timeout: W.elementTimeoutMs });
             await sleep(W.afterActionMs);
-            log(`AD BUY: ${name} senilai $${d.invested}`, 'ok');
+            log(`AD BUY: ${name} senilai $${amount}`, 'ok');
             d.result = 'BOUGHT';
             this.adDone.add(name);
         } catch {

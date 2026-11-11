@@ -30,6 +30,8 @@ const DEFAULTS = {
     adMinAgeH: 6,
     adUseRsi: true,
     adRsiMax: 30,
+    adMinOrderUsd: 0,     // minimum order manual (USD). 0 = otomatis dibaca dari tombol "Minimum amount $X"
+    adBelowMin: 'skip',   // invested < minimum: 'skip' = AD dilewati, 'min' = beli sebesar minimum
     maxLoop: 0,
     scanIntervalMs: 6000,
     reloadEvery: 4,
@@ -70,6 +72,7 @@ const DEFAULTS = {
         rsiValue: "//div[@data-qa-id='legend-source-item'][contains(.,'RSI')]//div[@data-test-id-value-title='Plot']//div[contains(@class,'valueValue')]",
         buyInput: "(//input[@placeholder='0' and contains(@class,'flex-1')])[1]",
         buyButton: "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Buy ')]",
+        minOrderButton: "//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]",
     },
 };
 

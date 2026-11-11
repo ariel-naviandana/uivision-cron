@@ -1,20 +1,33 @@
-// pw/login.js — buka Chrome profil bot untuk login ke fomo.family (sekali saja)
-// Login di jendela yang terbuka, lalu TUTUP jendelanya. Sesi tersimpan di browser.userDataDir.
+// pw/login.js — login ke fomo.family (sekali saja) memakai profil Chrome bot
+// Chrome dibuka BIASA (tanpa Playwright/remote debugging), karena Google menolak login
+// dari browser yang dikendalikan otomatis ("This browser or app may not be secure").
+// Sesi login tersimpan di browser.userDataDir dan dipakai bot saat jalan.
+const fs = require('fs');
+const { spawn } = require('child_process');
 const { loadPwConfig } = require('./config');
-const { openBrowser } = require('./browser');
 
-(async () => {
-    const cfg = loadPwConfig();
-    cfg.browser = { ...cfg.browser, headless: false, blockResources: false };
-    console.log(`Profil Chrome: ${cfg.browser.userDataDir}`);
-    console.log('Login ke fomo.family di jendela yang terbuka, lalu TUTUP jendelanya untuk selesai.');
-    const context = await openBrowser(cfg);
-    const page = context.pages()[0] || await context.newPage();
-    await page.goto(cfg.profileUrl).catch(() => {});
-    await new Promise((r) => context.on('close', r));
-    console.log('Selesai. Sesi login tersimpan.');
-    process.exit(0);
-})().catch((e) => {
-    console.error(e);
+const cfg = loadPwConfig();
+const { chromePath, userDataDir } = cfg.browser;
+
+fs.mkdirSync(userDataDir, { recursive: true });
+console.log(`Profil Chrome: ${userDataDir}`);
+console.log('Login ke fomo.family di jendela Chrome yang terbuka.');
+console.log('Setelah selesai, TUTUP semua jendela Chrome tersebut, lalu jalankan bot.');
+console.log('Pastikan bot (npm run pw / fomo-pw.exe) sedang TIDAK jalan saat login.');
+
+const child = spawn(chromePath, [
+    `--user-data-dir=${userDataDir}`,
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--new-window',
+    cfg.profileUrl,
+], { stdio: 'ignore' });
+
+child.on('error', (e) => {
+    console.error(`Gagal membuka Chrome (${chromePath}): ${e.message}`);
     process.exit(1);
+});
+child.on('exit', () => {
+    console.log('Chrome ditutup. Sesi login tersimpan.');
+    process.exit(0);
 });
