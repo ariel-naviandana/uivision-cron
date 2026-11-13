@@ -128,11 +128,13 @@ class FomoScanner {
         this.sinceOpen = 0;
     }
 
-    // Klik "Show dust (N)" kalau list dust masih tertutup (posisi kecil ada di dalamnya)
+    // showDust true : klik "Show dust (N)" kalau list dust masih tertutup (posisi kecil ikut di-scan)
+    // showDust false: klik "Hide dust" kalau list dust sedang terbuka (dust tidak di-scan)
     async openDust() {
-        const btn = this.x(this.sel.dustButton).first();
+        const show = this.cfg.showDust !== false;
+        const btn = this.x(show ? this.sel.dustButton : this.sel.hideDustButton).first();
         if (await btn.count().catch(() => 0)) {
-            await btn.click({ timeout: this.cfg.wait.clickTimeoutMs }).catch(() => log('Klik Show dust gagal', 'warn'));
+            await btn.click({ timeout: this.cfg.wait.clickTimeoutMs }).catch(() => log(`Klik ${show ? 'Show' : 'Hide'} dust gagal`, 'warn'));
             await sleep(1500);
         }
     }
@@ -512,7 +514,9 @@ class FomoScanner {
             // keputusan sell: trailing stop (kalau aktif, TP tidak dipakai) atau TP biasa
             let why = null;
             this.curKey = null;
-            if (this.cfg.trail.enabled) {
+            if (this.cfg.sellEnabled === false) {
+                // sell dimatikan: TP / trailing tidak dicek
+            } else if (this.cfg.trail.enabled) {
                 this.curKey = String((await row.getAttribute('href', { timeout: 3000 }).catch(() => null)) || name).split('?')[0];
                 why = this.checkTrail(ts, this.curKey, name, pct);
             } else if (pct >= tp) {
@@ -522,7 +526,7 @@ class FomoScanner {
             if (why) {
                 acted = true;
                 await this.doSell(k, ts, name, nominal, pct, why);
-            } else if (pct <= this.cfg.adTrigger) {
+            } else if (this.cfg.adEnabled !== false && pct <= this.cfg.adTrigger) {
                 if (this.adDone.has(name)) {
                     log(`Kandidat AD ${name} (${pct}%) dilewati: sudah pernah di-AD pada run ini`, 'warn');
                 } else {

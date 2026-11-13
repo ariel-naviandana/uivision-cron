@@ -23,10 +23,13 @@ const DEFAULTS = {
     profileName: 'VagueCoralJay',  // nama profil fomo (cukup ubah ini)
     // Halaman awal scan: detail coin apa saja (tanpa ?r=), posisi dibaca dari panel "Your positions"
     startTokenUrl: 'https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c',
+    sellEnabled: true,    // false = sell tidak dicek sama sekali (beda dengan dryRunSell)
+    adEnabled: true,      // false = AD tidak dicek sama sekali (beda dengan dryRunAd)
     dryRunSell: true,
     dryRunAd: true,
     tpCustom: {},
     exclude: [],
+    showDust: true,       // true = posisi dust (kecil) ikut di-scan, false = tidak
     // Sell. minProfit (%):
     //   trail.enabled=false: dipakai sebagai TP, sell saat margin >= minProfit (atau tpCustom per coin)
     //   trail.enabled=true : trailing stop, sell hanya kalau margin saat itu >= minProfit (tpCustom tidak dipakai)
@@ -66,6 +69,7 @@ const DEFAULTS = {
     selectors: {
         row: "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
         dustButton: "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",
+        hideDustButton: "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Hide dust')]",
         rowName: ".//div[contains(@class,'text-sm') and contains(@class,'truncate')]",
         rowValue: ".//div[contains(@class,'w-24')]",
         sellButton: "(//div[button[normalize-space(.)='Buy']]/button[normalize-space(.)='Sell'])[1]",

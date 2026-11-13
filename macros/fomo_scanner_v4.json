@@ -29,6 +29,18 @@
     {
       "Command": "store",
       "Target": "1",
+      "Value": "USE_SELL",
+      "Description": "1 = fitur sell aktif, 0 = sell tidak dicek sama sekali (beda dengan DRY_RUN_SELL)"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "USE_AD",
+      "Description": "1 = fitur AD aktif, 0 = AD tidak dicek sama sekali (beda dengan DRY_RUN_AD)"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
       "Value": "DRY_RUN_SELL",
       "Description": "SELL: 1 = dry run (berhenti sebelum klik Sell terakhir), 0 = jual beneran"
     },
@@ -43,6 +55,12 @@
       "Target": "",
       "Value": "EXCLUDE",
       "Description": "Coin yang dilewati total (tidak dibaca, tidak dilog, tidak di-sell/AD). Pisahkan dengan |, contoh: E/ACC|GATO. Kosong = tidak ada. Tidak peka huruf besar/kecil."
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "SHOW_DUST",
+      "Description": "1 = buka list dust (posisi kecil ikut di-scan), 0 = dust tidak di-scan"
     },
     {
       "Command": "store",
@@ -472,7 +490,7 @@
     },
     {
       "Command": "if",
-      "Target": "${dustCnt} > 0",
+      "Target": "${SHOW_DUST} == 1 && ${dustCnt} > 0",
       "Value": "",
       "Description": ""
     },
@@ -487,6 +505,36 @@
       "Target": "1500",
       "Value": "",
       "Description": "Tunggu list dust terbuka"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "storeXpathCount",
+      "Target": "xpath=//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Hide dust')]",
+      "Value": "hideCnt",
+      "Description": "Ada tombol \"Hide dust\"? (list dust sedang terbuka)"
+    },
+    {
+      "Command": "if",
+      "Target": "${SHOW_DUST} == 0 && ${hideCnt} > 0",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=(//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Hide dust')])[1]",
+      "Value": "",
+      "Description": "SHOW_DUST=0: tutup list dust"
+    },
+    {
+      "Command": "pause",
+      "Target": "1500",
+      "Value": "",
+      "Description": ""
     },
     {
       "Command": "end",
@@ -952,6 +1000,12 @@
     },
     {
       "Command": "if",
+      "Target": "${USE_SELL} == 1",
+      "Value": "",
+      "Description": "Sell aktif? Kalau 0, sell (TP / trailing) tidak dicek"
+    },
+    {
+      "Command": "if",
       "Target": "${USE_TRAIL} == 1",
       "Value": "",
       "Description": "Trailing stop: TP tidak dipakai"
@@ -1099,6 +1153,12 @@
       "Target": "",
       "Value": "",
       "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok USE_SELL"
     },
     {
       "Command": "if",
@@ -1834,7 +1894,7 @@
     },
     {
       "Command": "if",
-      "Target": "${acted} == 0 && ${pPct} <= ${AD_TRIGGER}",
+      "Target": "${USE_AD} == 1 && ${acted} == 0 && ${pPct} <= ${AD_TRIGGER}",
       "Value": "",
       "Description": "Belum ada aksi dan margin <= AD_TRIGGER? (kandidat AD)"
     },

@@ -13,10 +13,13 @@
   },
   "profileName": "VagueCoralJay",
   "startTokenUrl": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
+  "sellEnabled": true,
+  "adEnabled": true,
   "dryRunSell": true,
   "dryRunAd": true,
   "tpCustom": {},
   "exclude": [],
+  "showDust": true,
   "minProfit": 15,
   "trail": {
     "enabled": true,
@@ -55,6 +58,7 @@
   "selectors": {
     "row": "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
     "dustButton": "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",
+    "hideDustButton": "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Hide dust')]",
     "rowName": ".//div[contains(@class,'text-sm') and contains(@class,'truncate')]",
     "rowValue": ".//div[contains(@class,'w-24')]",
     "sellButton": "(//div[button[normalize-space(.)='Buy']]/button[normalize-space(.)='Sell'])[1]",
