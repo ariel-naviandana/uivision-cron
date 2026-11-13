@@ -26,7 +26,7 @@ transaksi yang sedang berjalan diselesaikan dulu, tidak dipotong di tengah seper
 ## Pengaturan: folder `config/`
 Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, `pw.config.json` lama (satu file) masih dibaca.
 
-### `config/general.json`: jadwal, fitur yang dijalankan, profil, browser
+### `config/general.json`: jadwal, fitur yang dijalankan, dry run, profil, browser, folder log
 | Key | Arti | Contoh |
 |---|---|---|
 | `timezone` | Zona waktu jadwal & log | `"Asia/Jakarta"` |
@@ -34,21 +34,24 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 | `runOnStart` | Langsung jalan saat start, tidak menunggu jadwal pertama | `true` |
 | `restartBrowser` | Tutup & buka ulang Chrome tiap jadwal | `true` |
 | `restartWaitMs` | Jeda (ms) setelah Chrome ditutup | `3000` |
-| `run.sell` | `false` = sell (TP / trailing) tidak dicek sama sekali. Beda dengan `dryRunSell` | `true` |
-| `run.ad` | `false` = AD tidak dicek sama sekali (halaman detail tidak dibuka). Beda dengan `dryRunAd` | `true` |
+| `run.sell` | `false` = sell (TP / trailing) tidak dicek sama sekali. Beda dengan `dryRun.sell` | `true` |
+| `run.ad` | `false` = AD tidak dicek sama sekali (halaman detail tidak dibuka). Beda dengan `dryRun.ad` | `true` |
 | `run.buy` | `true` = tab kedua dibuka untuk scanner buy (watchlist) | `false` |
+| `dryRun.sell` | `true` = sell berhenti sebelum klik konfirmasi Sell | `true` |
+| `dryRun.ad` | `true` = AD isi nominal tapi tidak klik Buy | `true` |
+| `dryRun.buy` | `true` = scanner buy isi nominal tapi tidak klik Buy | `true` |
 | `profileName` | Nama profil fomo, dipakai sebagai `?r=` di URL | `"VagueCoralJay"` |
 | `startTokenUrl` | Halaman awal: detail coin apa saja (tanpa `?r=`). Dipakai kedua tab | `"https://fomo.family/tokens/base/0xcbada7..."` |
 | `browser.chromePath` | Lokasi chrome.exe | `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"` |
 | `browser.userDataDir` | Folder profil Chrome khusus bot (sesi login fomo) | `"C:\\chrome-profiles\\fomo-playwright"` |
 | `browser.headless` | `true` = Chrome tanpa jendela | `false` |
 | `browser.viewport` | `null` = halaman ikut ukuran jendela (maximize). Isi ukuran untuk ukuran tetap | `null` atau `{ "width": 1600, "height": 1000 }` |
+| `output.dir` | Folder log CSV | `"C:\\uivision\\datasources"` |
+| `output.positionsFile` / `adLogFile` / `sellLogFile` / `trailFile` / `buyLogFile` | Nama file log posisi / AD / sell / puncak trailing / buy | `"fomo_buy_log.csv"` |
 
 ### `config/sell-ad.json`: sell dan AD (tab 1)
 | Key | Arti | Contoh |
 |---|---|---|
-| `dryRunSell` | `true` = berhenti sebelum klik konfirmasi Sell | `true` |
-| `dryRunAd` | `true` = isi nominal AD tapi tidak klik Buy | `true` |
 | `minProfit` | Trailing aktif: sell hanya kalau margin saat itu >= nilai ini. Trailing mati: dipakai sebagai TP (%) | `20` |
 | `tpCustom` | TP khusus per coin, menggantikan `minProfit` untuk coin itu (hanya saat trailing mati). Nama tidak peka huruf besar/kecil. Kosong = `{}` | `{ "E/ACC": 10, "COLLECTOOOR": 30 }` |
 | `trail.enabled` | `true` = sell pakai trailing stop (`tpCustom` tidak dipakai). `false` = sell saat margin >= `minProfit` | `false` |
@@ -66,16 +69,13 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 ### `config/buy.json`: scanner buy (tab 2)
 | Key | Arti | Contoh |
 |---|---|---|
-| `dryRunBuy` | `true` = isi nominal tapi tidak klik Buy | `true` |
 | `unstarAfterBuy` | `true` = coin di-unstar (hilang dari watchlist) setelah berhasil beli | `true` |
 | `scanIntervalMs` | Jeda (ms) antar scan watchlist | `10000` |
 | `coins` | Coin yang dipantau. `name` = nama di watchlist (tidak peka huruf besar/kecil), beli `amount` (USD) kalau market cap di antara `mcapMin` dan `mcapMax`. Coin di watchlist yang tidak ada di sini diabaikan | `[{ "name": "COINA", "mcapMin": 10000, "mcapMax": 50000, "amount": 5 }]` |
 
-### `config/paths.json`: folder log dan selector
+### `config/paths.json`: selector
 | Key | Arti | Contoh |
 |---|---|---|
-| `output.dir` | Folder log CSV | `"C:\\uivision\\datasources"` |
-| `output.positionsFile` / `adLogFile` / `sellLogFile` / `trailFile` / `buyLogFile` | Nama file log posisi / AD / sell / puncak trailing / buy | `"fomo_buy_log.csv"` |
 | `selectors.*` | XPath elemen fomo untuk sell & AD (ubah di sini kalau tampilan fomo berubah) | `"row": "(//a[...])"` |
 | `selectors.watchlistTab` | Buy: tombol/tab untuk membuka watchlist di sidebar. Kosong = tidak diklik | `"//button[...]"` |
 | `selectors.watchScroll` | Buy: panel sidebar yang bisa di-scroll. Watchlist hanya merender coin yang terlihat, jadi panel di-scroll dari atas ke bawah. Kosong = tidak di-scroll | `"//*[@id='discovery-panels']//div[contains(@class,'overflow-y-auto')][...]"` |
@@ -107,7 +107,7 @@ Kalau tombol Buy berubah jadi "Insufficient balance" (saldo tidak cukup), AD dib
 1. Buka halaman awal, klik tab watchlist (`selectors.watchlistTab`), baca semua baris watchlist.
 2. Coin yang ada di `config/buy.json -> coins`: market cap dibaca dari sidebar. Kalau di antara `mcapMin` dan `mcapMax`, buka detail coin.
 3. Pilih tab Buy, isi `amount`, cek tombol "Buy <nama>" (minimum order / saldo kurang dicatat dan dilewati).
-4. `dryRunBuy: true` berhenti di sini. Kalau tidak, klik Buy lalu unstar coin supaya hilang dari watchlist.
+4. `dryRun.buy: true` (di `general.json`) berhenti di sini. Kalau tidak, klik Buy lalu unstar coin supaya hilang dari watchlist.
 5. Setiap coin diproses maksimal 1x per run (termasuk dry run), jadi tidak terbeli dua kali walau unstar gagal.
 
 ## Log (format sama dengan macro)

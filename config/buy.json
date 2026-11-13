@@ -1,5 +1,4 @@
 {
-  "dryRunBuy": true,
   "unstarAfterBuy": true,
   "scanIntervalMs": 10000,
   "coins": [

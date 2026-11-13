@@ -1,6 +1,4 @@
 {
-  "dryRunSell": true,
-  "dryRunAd": true,
   "minProfit": 15,
   "tpCustom": {},
   "trail": {

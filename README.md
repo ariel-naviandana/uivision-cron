@@ -17,7 +17,7 @@ fomo-scanner/
 │  └─ fomo_scanner_v4.json   v4: scan dari panel "Your positions" di halaman detail coin
 ├─ scheduler/index.js   scheduler UI.Vision: jalankan macro lewat uivision.html sesuai jadwal
 ├─ pw/                  versi Playwright (index, run, scanner = sell/AD, buyer = buy, browser, config, login, util)
-├─ config/              config Playwright: general, sell-ad, buy, paths, timing
+├─ config/              config Playwright: general (jadwal, run, dryRun, output), sell-ad, buy, paths (selector), timing
 ├─ docs/
 │  ├─ playwright.md     pengaturan config/ dan format log
 │  └─ build-exe.md      cara build kedua exe

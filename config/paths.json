@@ -1,12 +1,4 @@
 {
-  "output": {
-    "dir": "C:\\uivision\\datasources",
-    "positionsFile": "fomo_positions.csv",
-    "adLogFile": "fomo_ad_log.csv",
-    "sellLogFile": "fomo_sell_log.csv",
-    "trailFile": "fomo_trail.csv",
-    "buyLogFile": "fomo_buy_log.csv"
-  },
   "selectors": {
     "row": "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
     "dustButton": "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",

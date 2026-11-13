@@ -9,6 +9,11 @@
     "ad": true,
     "buy": false
   },
+  "dryRun": {
+    "sell": true,
+    "ad": true,
+    "buy": true
+  },
   "profileName": "VagueCoralJay",
   "startTokenUrl": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
   "browser": {
@@ -17,5 +22,13 @@
     "headless": false,
     "blockResources": false,
     "viewport": null
+  },
+  "output": {
+    "dir": "C:\\uivision\\datasources",
+    "positionsFile": "fomo_positions.csv",
+    "adLogFile": "fomo_ad_log.csv",
+    "sellLogFile": "fomo_sell_log.csv",
+    "trailFile": "fomo_trail.csv",
+    "buyLogFile": "fomo_buy_log.csv"
   }
 }

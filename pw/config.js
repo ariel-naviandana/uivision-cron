@@ -1,8 +1,9 @@
 // pw/config.js — baca pengaturan versi Playwright dari folder config/
-//   config/general.json  jadwal, browser, profil fomo, halaman awal, fitur yang dijalankan (run.sell/ad/buy)
+//   config/general.json  jadwal, browser, profil fomo, halaman awal, fitur yang dijalankan (run),
+//                        dry run (dryRun.sell/ad/buy), folder & file log (output)
 //   config/sell-ad.json  sell (TP / trailing) dan AD
 //   config/buy.json      scanner buy (watchlist)
-//   config/paths.json    folder & file log, selector (XPath)
+//   config/paths.json    selector (XPath)
 //   config/timing.json   wait, retry, interval
 // Folder config/ dibaca dari folder exe (kalau dijalankan sebagai .exe) atau folder project.
 // Kalau folder config/ tidak ada, pw.config.json lama (satu file) masih dibaca.
@@ -143,7 +144,7 @@ function readUserConfig() {
         return readJson(path.join(BASE_DIR, 'pw.config.json'));
     }
     const [general, sellAd, buy, paths, timing] = CONFIG_FILES.map((f) => readJson(path.join(dir, f)));
-    const { run, ...gen } = general;
+    const { run, dryRun, ...gen } = general;
     const user = { ...gen, ...sellAd, ...paths, ...timing };
     if (run) {
         if (run.sell !== undefined) user.sellEnabled = run.sell;
@@ -151,6 +152,11 @@ function readUserConfig() {
         if (run.buy !== undefined) user.buyEnabled = run.buy;
     }
     if (Object.keys(buy).length) user.buy = buy;
+    if (dryRun) {
+        if (dryRun.sell !== undefined) user.dryRunSell = dryRun.sell;
+        if (dryRun.ad !== undefined) user.dryRunAd = dryRun.ad;
+        if (dryRun.buy !== undefined) user.buy = { ...(user.buy || {}), dryRunBuy: dryRun.buy };
+    }
     return user;
 }
 
