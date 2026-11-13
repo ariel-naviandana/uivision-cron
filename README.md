@@ -5,7 +5,7 @@ Ada dua versi yang menjalankan logika yang sama. Jangan jalankan keduanya bersam
 
 | Versi | Jalankan | Config | Exe |
 |---|---|---|---|
-| UI.Vision (scheduler + macro) | `npm start` | `config.json` | `uivision-scheduler.exe` |
+| UI.Vision (scheduler + macro) | `npm start` | `uivision.config.json` | `uivision-scheduler.exe` |
 | Playwright | `npm run pw` (login sekali: `npm run pw:login`) | `pw.config.json` | `fomo-pw.exe` |
 
 ## Struktur
@@ -20,7 +20,7 @@ uivision-cron/
 │  ├─ playwright.md     pengaturan pw.config.json dan format log
 │  └─ build-exe.md      cara build kedua exe
 ├─ build/               file perantara build exe (bundle .js, .blob, config SEA)
-├─ config.json          config scheduler UI.Vision (macroName, jadwal, kill Chrome)
+├─ uivision.config.json config scheduler UI.Vision (macroName, jadwal, kill Chrome)
 ├─ pw.config.json       config versi Playwright
 ├─ uivision.html        launcher macro UI.Vision
 ├─ uivision-scheduler.exe, fomo-pw.exe
@@ -28,7 +28,7 @@ uivision-cron/
 ```
 
 ## Catatan
-- `config.json` -> `macroName` menentukan macro yang dijalankan scheduler (`fomo_scanner` = v3, `fomo_scanner_v4` = v4).
+- `uivision.config.json` -> `macroName` menentukan macro yang dijalankan scheduler (`fomo_scanner` = v3, `fomo_scanner_v4` = v4).
 - Kalau macro diubah, simpan di `C:\uivision\macros` dan salin juga ke `macros/` di sini.
-- Exe membaca config dari folder exe, jadi `config.json`, `pw.config.json`, `uivision.html`,
+- Exe membaca config dari folder exe, jadi `uivision.config.json`, `pw.config.json`, `uivision.html`,
   dan `node_modules` (untuk fomo-pw.exe) tetap di root bersama exe.

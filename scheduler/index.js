@@ -5,10 +5,10 @@ const path = require('path');
 
 // Folder tempat exe berada. Kalau dijalankan lewat "node index.js", pakai folder script.
 const isExe = path.basename(process.execPath).toLowerCase() !== 'node.exe';
-// config.json ada di root project (folder di atas scheduler/), atau di folder exe
+// uivision.config.json ada di root project (folder di atas scheduler/), atau di folder exe
 const BASE_DIR = isExe ? path.dirname(process.execPath) : path.join(__dirname, '..');
 
-// Nilai bawaan kalau config.json tidak ada atau ada key yang kosong
+// Nilai bawaan kalau uivision.config.json tidak ada atau ada key yang kosong
 const defaults = {
     macroName: 'fomo_scanner',
     uivisionHtml: 'file:///C:/coding/uivision-cron/uivision.html',
@@ -20,12 +20,14 @@ const defaults = {
 };
 
 let cfg = { ...defaults };
-const configPath = path.join(BASE_DIR, 'config.json');
+// uivision.config.json (nama lama config.json masih dibaca kalau yang baru belum ada)
+const configPath = [path.join(BASE_DIR, 'uivision.config.json'), path.join(BASE_DIR, 'config.json')]
+    .find((p) => fs.existsSync(p)) || path.join(BASE_DIR, 'uivision.config.json');
 try {
     cfg = { ...defaults, ...JSON.parse(fs.readFileSync(configPath, 'utf-8')) };
     console.log(`Config dibaca dari: ${configPath}`);
 } catch (e) {
-    console.log(`config.json tidak ditemukan/rusak di ${configPath}, pakai nilai bawaan`);
+    console.log(`uivision.config.json tidak ditemukan/rusak di ${configPath}, pakai nilai bawaan`);
 }
 
 if (!cron.validate(cfg.schedule)) {

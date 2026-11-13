@@ -7,7 +7,7 @@ const isExe = !['node.exe', 'node'].includes(path.basename(process.execPath).toL
 const BASE_DIR = isExe ? path.dirname(process.execPath) : path.join(__dirname, '..');
 
 const DEFAULTS = {
-    // Jadwal (padanan config.json versi UI.Vision)
+    // Jadwal (padanan uivision.config.json versi UI.Vision)
     timezone: 'Asia/Jakarta',
     schedule: '*/15 * * * *', // cron mulai ulang run; '' = jalan terus tanpa jadwal
     runOnStart: true,         // langsung jalan saat start, tidak menunggu jadwal pertama

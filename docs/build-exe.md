@@ -1,7 +1,7 @@
 BUILD EXE (Windows PowerShell, jalankan di ROOT folder project, bukan di build/)
 ==========================================================
 Ada 2 exe:
-  1. uivision-scheduler.exe  -> scheduler lama (UI.Vision + cron), dari scheduler/index.js, config: config.json
+  1. uivision-scheduler.exe  -> scheduler lama (UI.Vision + cron), dari scheduler/index.js, config: uivision.config.json
   2. fomo-pw.exe             -> versi Playwright, dari pw/index.js, config: pw.config.json
 
 Exe dibuat dengan Node SEA: isinya node.exe + kode yang di-bundle esbuild.
@@ -34,8 +34,8 @@ node -e "require('fs').copyFileSync(process.execPath, 'uivision-scheduler.exe')"
 npx postject uivision-scheduler.exe NODE_SEA_BLOB build/sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
 Kebutuhan saat dijalankan (taruh di folder yang sama dengan exe):
-  - config.json
-  - uivision.html (sesuai path "uivisionHtml" di config.json)
+  - uivision.config.json
+  - uivision.html (sesuai path "uivisionHtml" di uivision.config.json)
 
 
 2. fomo-pw.exe (Playwright)

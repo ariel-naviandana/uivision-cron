@@ -1,6 +1,6 @@
 // pw/run.js — Fomo scanner (sell TP & average down) versi Playwright
 // Pengganti macro UI.Vision fomo_scanner + scheduler index.js.
-//   schedule    : cron untuk memulai ulang run (padanan "schedule" di config.json lama).
+//   schedule    : cron untuk memulai ulang run (padanan "schedule" di uivision.config.json).
 //                 Kosong ("") = satu run jalan terus tanpa jadwal.
 //   runOnStart  : langsung jalan saat start.
 //   restartBrowser : tiap jadwal Chrome ditutup & dibuka ulang (padanan "killChrome").
