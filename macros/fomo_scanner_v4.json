@@ -1018,21 +1018,27 @@
     },
     {
       "Command": "store",
+      "Target": "ok",
+      "Value": "failAt",
+      "Description": "Reset penanda langkah yang gagal"
+    },
+    {
+      "Command": "store",
       "Target": "true",
       "Value": "!errorIgnore",
-      "Description": "Mulai blok aman: langkah di popup sell dicek lewat status; konfirmasi hanya diklik kalau semuanya sukses"
+      "Description": "Mulai blok aman: langkah sell di halaman detail dicek lewat status; konfirmasi hanya diklik kalau semuanya sukses"
     },
     {
       "Command": "store",
       "Target": "true",
       "Value": "!statusOK",
-      "Description": "Reset status sebelum langkah di popup sell"
+      "Description": "Reset status sebelum langkah sell di halaman detail"
     },
     {
       "Command": "executeScript_Sandbox",
       "Target": "return 1;",
       "Value": "flowOk",
-      "Description": "Mulai akumulasi status langkah di popup sell"
+      "Description": "Mulai akumulasi status langkah sell di halaman detail"
     },
     {
       "Command": "pause",
@@ -1047,28 +1053,46 @@
       "Description": "Pastikan halaman detail yang terbuka sesuai coin yang diklik (cek URL)"
     },
     {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${failAt}) !== 'ok' ? String(${failAt}) : (Number(${flowOk}) === 1 ? 'ok' : 'URL_TIDAK_SESUAI');",
+      "Value": "failAt",
+      "Description": "Catat langkah pertama yang gagal"
+    },
+    {
       "Command": "waitForElementPresent",
-      "Target": "xpath=//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
+      "Target": "xpath=(//div[button[normalize-space(.)='Buy']]/button[normalize-space(.)='Sell'])[1]",
       "Value": "",
-      "Description": "Pastikan tombol Sell di popup sudah ada"
+      "Description": "Pastikan tombol Sell di halaman detail sudah ada"
     },
     {
       "Command": "executeScript_Sandbox",
       "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
       "Value": "flowOk",
       "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${failAt}) !== 'ok' ? String(${failAt}) : (Number(${flowOk}) === 1 ? 'ok' : 'TOMBOL_SELL_TIDAK_ADA');",
+      "Value": "failAt",
+      "Description": "Catat langkah pertama yang gagal"
     },
     {
       "Command": "click",
-      "Target": "xpath=//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
+      "Target": "xpath=(//div[button[normalize-space(.)='Buy']]/button[normalize-space(.)='Sell'])[1]",
       "Value": "",
-      "Description": "Klik tombol Sell di popup"
+      "Description": "Klik tombol Sell di halaman detail"
     },
     {
       "Command": "executeScript_Sandbox",
       "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
       "Value": "flowOk",
       "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${failAt}) !== 'ok' ? String(${failAt}) : (Number(${flowOk}) === 1 ? 'ok' : 'KLIK_SELL');",
+      "Value": "failAt",
+      "Description": "Catat langkah pertama yang gagal"
     },
     {
       "Command": "pause",
@@ -1089,6 +1113,12 @@
       "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
     },
     {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${failAt}) !== 'ok' ? String(${failAt}) : (Number(${flowOk}) === 1 ? 'ok' : 'KLIK_100');",
+      "Value": "failAt",
+      "Description": "Catat langkah pertama yang gagal"
+    },
+    {
       "Command": "pause",
       "Target": "500",
       "Value": "",
@@ -1105,6 +1135,12 @@
       "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
       "Value": "flowOk",
       "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${failAt}) !== 'ok' ? String(${failAt}) : (Number(${flowOk}) === 1 ? 'ok' : 'TOMBOL_KONFIRMASI_TIDAK_ADA');",
+      "Value": "failAt",
+      "Description": "Catat langkah pertama yang gagal"
     },
     {
       "Command": "executeScript_Sandbox",
@@ -1348,9 +1384,9 @@
     },
     {
       "Command": "echo",
-      "Target": "Coin di popup tidak cocok (${finalText}), dilewati, scan ulang",
+      "Target": "Sell dibatalkan: ${pName} | gagal di: ${failAt} | tombol: ${finalText} | url: ${!URL} | link baris: ${rowHref}",
       "Value": "red",
-      "Description": "Info popup tidak cocok, sell dibatalkan"
+      "Description": "Info sell dibatalkan + langkah yang gagal (untuk diagnosa)"
     },
     {
       "Command": "store",
@@ -2182,9 +2218,9 @@
     },
     {
       "Command": "echo",
-      "Target": "Popup coin tidak cocok (${popName}), AD dibatalkan",
+      "Target": "Halaman detail tidak sesuai untuk ${pName}, AD dibatalkan | url: ${!URL} | link baris: ${rowHref}",
       "Value": "red",
-      "Description": "Info popup tidak cocok, AD dibatalkan"
+      "Description": "Info halaman detail tidak sesuai, AD dibatalkan"
     },
     {
       "Command": "end",

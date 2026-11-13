@@ -61,7 +61,7 @@ const DEFAULTS = {
         dustButton: "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",
         rowName: ".//div[contains(@class,'text-sm') and contains(@class,'truncate')]",
         rowValue: ".//div[contains(@class,'w-24')]",
-        sellButton: "//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
+        sellButton: "(//div[button[normalize-space(.)='Buy']]/button[normalize-space(.)='Sell'])[1]",
         sell100: "//fieldset//button[normalize-space(text())='100%']",
         sellConfirm: "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Sell ')]",
         detailAge: "(//span[@title and @translate='no' and contains(@class,'text-xs') and contains(@class,'text-text-secondary') and contains(@class,'shrink-0')])[1]",

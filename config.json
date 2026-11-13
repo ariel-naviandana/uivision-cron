@@ -1,5 +1,5 @@
 {
-  "macroName": "fomo_scanner",
+  "macroName": "fomo_scanner_v4",
   "uivisionHtml": "file:///C:/coding/uivision-cron/uivision.html",
   "timezone": "Asia/Jakarta",
   "schedule": "*/15 * * * *",
