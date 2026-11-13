@@ -22,12 +22,18 @@ const DEFAULTS = {
     },
     profileName: 'VagueCoralJay',  // nama profil fomo (cukup ubah ini)
     // Halaman awal scan: detail coin apa saja (tanpa ?r=), posisi dibaca dari panel "Your positions"
-    startTokenUrl: 'https://fomo.family/tokens/solana/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
+    startTokenUrl: 'https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c',
     dryRunSell: true,
     dryRunAd: true,
-    tp: 20,
     tpCustom: {},
     exclude: [],
+    // Sell. minProfit (%):
+    //   trail.enabled=false: dipakai sebagai TP, sell saat margin >= minProfit (atau tpCustom per coin)
+    //   trail.enabled=true : trailing stop, sell hanya kalau margin saat itu >= minProfit (tpCustom tidak dipakai)
+    minProfit: 20,
+    //   start     : trailing mulai dihitung saat margin >= start (%)
+    //   drop      : sell kalau margin turun >= drop POIN dari puncak (puncak 50, drop 10 -> sell di <= 40)
+    trail: { enabled: false, start: 30, drop: 10 },
     adTrigger: -25,
     adMinAgeH: 6,
     adUseRsi: true,
@@ -45,6 +51,7 @@ const DEFAULTS = {
         positionsFile: 'fomo_positions.csv',
         adLogFile: 'fomo_ad_log.csv',
         sellLogFile: 'fomo_sell_log.csv',
+        trailFile: 'fomo_trail.csv',      // puncak margin trailing stop per coin
     },
     wait: {
         startLoadMs: 5000,  // tunggu halaman awal termuat
@@ -53,7 +60,7 @@ const DEFAULTS = {
         clickTimeoutMs: 5000,
         elementTimeoutMs: 10000,
         rsiTimeoutMs: 4000,
-        rsiTries: 3,
+        rsiTries: 6,
         navTimeoutMs: 45000,
     },
     selectors: {

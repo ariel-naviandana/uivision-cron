@@ -96,7 +96,8 @@ async function shutdown() {
     console.log(`   Jadwal      : ${cfg.schedule || 'tanpa jadwal (jalan terus)'} | zona ${cfg.timezone}`);
     console.log(`   Run saat start: ${cfg.runOnStart ? 'ya' : 'tidak'} | restart Chrome tiap jadwal: ${cfg.restartBrowser ? 'ya' : 'tidak'}`);
     console.log(`   Chrome      : ${cfg.browser.userDataDir} (headless: ${cfg.browser.headless ? 'ya' : 'tidak'})`);
-    console.log(`   Sell        : TP ${cfg.tp}%${Object.keys(cfg.tpMap).length ? ` | custom ${JSON.stringify(cfg.tpCustom)}` : ''} | ${cfg.dryRunSell ? 'DRY RUN' : 'JUAL BENERAN'}`);
+    const t = cfg.trail;
+    console.log(`   Sell        : ${t.enabled ? `trailing mulai ${t.start}% | turun ${t.drop} poin | min profit ${cfg.minProfit}%` : `TP ${cfg.minProfit}% (minProfit)${Object.keys(cfg.tpMap).length ? ` | custom ${JSON.stringify(cfg.tpCustom)}` : ''}`} | ${cfg.dryRunSell ? 'DRY RUN' : 'JUAL BENERAN'}`);
     console.log(`   AD          : margin <= ${cfg.adTrigger}% | umur >= ${cfg.adMinAgeH}h | RSI ${cfg.adUseRsi ? `<= ${cfg.adRsiMax}` : 'tidak dipakai'} | ${cfg.dryRunAd ? 'DRY RUN' : 'BELI BENERAN'}`);
     console.log(`   Exclude     : ${cfg.exclude.length ? cfg.exclude.join(', ') : '-'}`);
     console.log(`   Output      : ${cfg.output.dir}`);

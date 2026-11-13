@@ -6,6 +6,8 @@
 //   - margin <= adTrigger (belum ada aksi) -> cek AD di halaman detail (umur, RSI, MC < avg, invested)
 //                                            -> kalau lolos: isi nominal = invested, Buy
 // Log CSV sama dengan macro: fomo_positions.csv, fomo_sell_log.csv, fomo_ad_log.csv
+const fs = require('fs');
+const path = require('path');
 const { log, sleep, nowTs, money, margin, ageHours, appendCsv } = require('./util');
 
 class FomoScanner {
@@ -23,6 +25,50 @@ class FomoScanner {
         this.total = 0;
         this.iter = 0;
         this.stopped = false;
+        this.trailMap = this.loadTrail(); // puncak margin per coin (key = link coin), tetap tersimpan antar run
+    }
+
+    // ---------- TRAILING STOP ----------
+    // fomo_trail.csv: waktu, link coin, nama, puncak margin (atau RESET). Baris terakhir per coin yang berlaku.
+    loadTrail() {
+        const map = {};
+        if (!this.cfg.trail.enabled) return map;
+        const file = path.join(this.out.dir, this.out.trailFile);
+        try {
+            for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+                const c = line.split(',');
+                if (c.length < 4) continue;
+                const key = c[1].replace(/^"|"$/g, '');
+                const v = c[c.length - 1].replace(/^"|"$/g, '').trim();
+                if (v === 'RESET') delete map[key];
+                else if (Number.isFinite(parseFloat(v))) map[key] = parseFloat(v);
+            }
+        } catch { /* file belum ada */ }
+        const t = this.cfg.trail;
+        log(`Trailing stop aktif: mulai ${t.start}% | turun ${t.drop} poin | min profit ${this.cfg.minProfit}% | ${Object.keys(map).length} coin sudah punya puncak`);
+        return map;
+    }
+
+    setTrail(ts, key, name, peak) {
+        if (peak === null) delete this.trailMap[key];
+        else this.trailMap[key] = peak;
+        appendCsv(this.out.dir, this.out.trailFile, [ts, key, name, peak === null ? 'RESET' : peak]);
+    }
+
+    // Return alasan sell (string) kalau trailing stop kena, null kalau belum
+    checkTrail(ts, key, name, pct) {
+        const t = this.cfg.trail;
+        const old = this.trailMap[key];
+        let peak = old;
+        if (pct >= t.start && (peak === undefined || pct > peak)) {
+            peak = pct;
+            this.setTrail(ts, key, name, peak);
+        }
+        if (peak === undefined) return null;
+        const stop = +(peak - t.drop).toFixed(2);
+        log(`TRAIL ${name}: margin ${pct}% | puncak ${peak}% | sell di <= ${stop}% (min profit ${this.cfg.minProfit}%)`);
+        if (pct <= stop && pct >= this.cfg.minProfit) return `trailing stop: puncak ${peak}%, turun ke ${pct}%`;
+        return null;
     }
 
     // sleep yang berhenti lebih awal kalau run dihentikan (jadwal berikutnya / Ctrl+C)
@@ -72,7 +118,7 @@ class FomoScanner {
 
     tpFor(name) {
         const v = this.cfg.tpMap[name.toLowerCase()];
-        return Number.isFinite(v) ? v : Number(this.cfg.tp);
+        return Number.isFinite(v) ? v : Number(this.cfg.minProfit);
     }
 
     async openProfile() {
@@ -158,9 +204,9 @@ class FomoScanner {
     }
 
     // ---------- SELL ----------
-    async doSell(k, ts, name, nominal, pct, tp) {
+    async doSell(k, ts, name, nominal, pct, why) {
         const W = this.cfg.wait;
-        log(`SELL: ${name} (${pct}% >= TP ${tp}%)`, 'ok');
+        log(`SELL: ${name} (${pct}%) | ${why}`, 'ok');
         this.needOpen = true;
 
         const href = await this.rowHref(k);
@@ -218,6 +264,7 @@ class FomoScanner {
         if (clicked) {
             log(`SOLD: ${name} (${pct}%)`, 'ok');
             this.logSell(ts, name, nominal, pct, 'SOLD');
+            if (this.cfg.trail.enabled && this.curKey) this.setTrail(ts, this.curKey, name, null);
             this.resumeK = k; // coin terjual hilang dari list, coin berikutnya menempati nomor yang sama
         } else {
             log(`SELL GAGAL: ${name} (tombol konfirmasi tidak bisa diklik)`, 'err');
@@ -382,6 +429,8 @@ class FomoScanner {
             await sleep(W.afterActionMs);
             log(`AD BUY: ${name} senilai $${amount}`, 'ok');
             d.result = 'BOUGHT';
+            // avg entry berubah setelah AD, puncak trailing lama tidak berlaku lagi
+            if (this.cfg.trail.enabled && this.curKey && this.trailMap[this.curKey] !== undefined) this.setTrail(ts, this.curKey, name, null);
             this.adDone.add(name);
         } catch {
             await sleep(W.afterActionMs);
@@ -457,12 +506,22 @@ class FomoScanner {
             const pct = margin(colText);
             const tp = this.tpFor(name);
             const ts = nowTs();
-            log(`${name} | $${nominal} | ${pct}% | TP ${tp}%`, 'ok');
+            log(`${name} | $${nominal} | ${pct}% | ${this.cfg.trail.enabled ? 'trailing' : `TP ${tp}%`}`, 'ok');
             appendCsv(this.out.dir, this.out.positionsFile, [ts, name, nominal, pct]);
 
-            if (pct >= tp) {
+            // keputusan sell: trailing stop (kalau aktif, TP tidak dipakai) atau TP biasa
+            let why = null;
+            this.curKey = null;
+            if (this.cfg.trail.enabled) {
+                this.curKey = String((await row.getAttribute('href', { timeout: 3000 }).catch(() => null)) || name).split('?')[0];
+                why = this.checkTrail(ts, this.curKey, name, pct);
+            } else if (pct >= tp) {
+                why = `TP ${tp}%`;
+            }
+
+            if (why) {
                 acted = true;
-                await this.doSell(k, ts, name, nominal, pct, tp);
+                await this.doSell(k, ts, name, nominal, pct, why);
             } else if (pct <= this.cfg.adTrigger) {
                 if (this.adDone.has(name)) {
                     log(`Kandidat AD ${name} (${pct}%) dilewati: sudah pernah di-AD pada run ini`, 'warn');

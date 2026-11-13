@@ -16,7 +16,7 @@
     },
     {
       "Command": "store",
-      "Target": "https://fomo.family/tokens/solana/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
+      "Target": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
       "Value": "START_TOKEN_URL",
       "Description": "Halaman awal scan: detail coin apa saja (tanpa ?r=). Posisi dibaca dari panel \"Your positions\""
     },
@@ -40,12 +40,6 @@
     },
     {
       "Command": "store",
-      "Target": "20",
-      "Value": "TP",
-      "Description": "TP default: sell jika margin >= TP (%), kecuali coin tersebut ada di TP_CUSTOM"
-    },
-    {
-      "Command": "store",
       "Target": "",
       "Value": "EXCLUDE",
       "Description": "Coin yang dilewati total (tidak dibaca, tidak dilog, tidak di-sell/AD). Pisahkan dengan |, contoh: E/ACC|COLLECTOOOR. Kosong = tidak ada. Tidak peka huruf besar/kecil."
@@ -54,7 +48,37 @@
       "Command": "store",
       "Target": "",
       "Value": "TP_CUSTOM",
-      "Description": "TP khusus per coin, format NAMA:TP dipisah |, contoh: E/ACC:10|COLLECTOOOR:30. Coin yang tidak tercantum memakai TP default di atas. Kosong = semua pakai TP default."
+      "Description": "TP khusus per coin saat USE_TRAIL=0, format NAMA:TP|NAMA:TP (coin lain pakai MIN_PROFIT)"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "USE_TRAIL",
+      "Description": "1 = sell pakai trailing stop (TP_CUSTOM tidak dipakai), 0 = sell saat margin >= MIN_PROFIT (atau TP_CUSTOM)"
+    },
+    {
+      "Command": "store",
+      "Target": "30",
+      "Value": "TRAIL_START",
+      "Description": "Trailing mulai dihitung saat margin >= nilai ini (%)"
+    },
+    {
+      "Command": "store",
+      "Target": "10",
+      "Value": "TRAIL_DROP",
+      "Description": "Sell kalau margin turun >= sekian POIN dari puncak (puncak 50, drop 10 -> sell di <= 40)"
+    },
+    {
+      "Command": "store",
+      "Target": "20",
+      "Value": "MIN_PROFIT",
+      "Description": "Min profit (%). USE_TRAIL=1: sell trailing hanya kalau margin >= nilai ini. USE_TRAIL=0: dipakai sebagai TP (sell saat margin >= nilai ini)"
+    },
+    {
+      "Command": "store",
+      "Target": "fomo_trail.csv",
+      "Value": "TRAIL_FILE",
+      "Description": "Simpan puncak margin per coin (tetap ada walau run/Chrome di-restart)"
     },
     {
       "Command": "store",
@@ -193,6 +217,138 @@
       "Target": "0",
       "Value": "pageFail",
       "Description": "Jumlah kegagalan halaman berturut-turut"
+    },
+    {
+      "Command": "comment",
+      "Target": "--- TRAILING STOP: baca puncak margin tersimpan ---",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "{}",
+      "Value": "trailMap",
+      "Description": "Puncak margin per coin, key = link coin"
+    },
+    {
+      "Command": "if",
+      "Target": "${USE_TRAIL} == 1",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "trEof",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "trN",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "!csvReadLineNumber",
+      "Description": ""
+    },
+    {
+      "Command": "while",
+      "Target": "${trEof} == 0 && ${trN} < 20000",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": ""
+    },
+    {
+      "Command": "csvRead",
+      "Target": "${TRAIL_FILE}",
+      "Value": "",
+      "Description": "Baca 1 baris (file belum ada / habis = berhenti)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (String(${!statusOK}) === 'true' && String(${!csvReadStatus}) === 'OK') ? 0 : 1;",
+      "Value": "trEof",
+      "Description": ""
+    },
+    {
+      "Command": "if",
+      "Target": "${trEof} == 0",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${trailMap});}catch(e){} var k=String(${!COL2}); var v=String(${!COL4}).trim(); if(v==='RESET'){delete m[k];} else {var n=parseFloat(v); if(!isNaN(n)){m[k]=n;}} return JSON.stringify(m);",
+      "Value": "trailMap",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${!csvReadLineNumber}) + 1;",
+      "Value": "trLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${trLine}",
+      "Value": "!csvReadLineNumber",
+      "Description": "Lanjut ke baris berikutnya"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${trN}) + 1;",
+      "Value": "trN",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${trailMap});}catch(e){} return Object.keys(m).length;",
+      "Value": "trCnt",
+      "Description": ""
+    },
+    {
+      "Command": "echo",
+      "Target": "Trailing stop aktif: mulai ${TRAIL_START}% | turun ${TRAIL_DROP} poin | min profit ${MIN_PROFIT}% | ${trCnt} coin sudah punya puncak",
+      "Value": "blue",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
     },
     {
       "Command": "comment",
@@ -730,7 +886,7 @@
     },
     {
       "Command": "executeScript_Sandbox",
-      "Target": "var nm=String(${pName}).trim().toLowerCase(); var l=String(${TP_CUSTOM}).split('|'); for(var i=0;i<l.length;i++){var p=l[i].lastIndexOf(':'); if(p<0){continue;} var key=l[i].slice(0,p).trim().toLowerCase(); var v=parseFloat(l[i].slice(p+1)); if(key===nm && !isNaN(v)){return v;}} return Number(${TP});",
+      "Target": "var nm=String(${pName}).trim().toLowerCase(); var l=String(${TP_CUSTOM}).split('|'); for(var i=0;i<l.length;i++){var p=l[i].lastIndexOf(':'); if(p<0){continue;} var key=l[i].slice(0,p).trim().toLowerCase(); var v=parseFloat(l[i].slice(p+1)); if(key===nm && !isNaN(v)){return v;}} return Number(${MIN_PROFIT});",
       "Value": "tpCoin",
       "Description": "TP yang berlaku untuk coin ini: dari TP_CUSTOM kalau ada, kalau tidak TP default"
     },
@@ -783,10 +939,172 @@
       "Description": "Bagian keputusan sell"
     },
     {
+      "Command": "store",
+      "Target": "x",
+      "Value": "rowKey",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "sellNow",
+      "Description": ""
+    },
+    {
       "Command": "if",
-      "Target": "${pPct} >= ${tpCoin}",
+      "Target": "${USE_TRAIL} == 1",
       "Value": "",
-      "Description": "Margin mencapai TP coin ini? (kalau ya, proses sell)"
+      "Description": "Trailing stop: TP tidak dipakai"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": ""
+    },
+    {
+      "Command": "storeAttribute",
+      "Target": "xpath=${ROW}[${k}]@href",
+      "Value": "rowKey",
+      "Description": "Link coin = key puncak trailing"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var k=String(${rowKey}); return (k==='x' || k==='') ? 'name:' + String(${pName}).toLowerCase() : k.split('?')[0];",
+      "Value": "rowKey",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${trailMap});}catch(e){} var p=m[${rowKey}]; return (p===undefined) ? -9999 : Number(p);",
+      "Value": "trPeakOld",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var p=Number(${trPeakOld}), c=Number(${pPct}); return (c >= Number(${TRAIL_START}) && c > p) ? c : p;",
+      "Value": "trPeak",
+      "Description": "Puncak baru kalau margin >= TRAIL_START dan lebih tinggi"
+    },
+    {
+      "Command": "if",
+      "Target": "${trPeak} > ${trPeakOld}",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${trailMap});}catch(e){} m[${rowKey}]=Number(${trPeak}); return JSON.stringify(m);",
+      "Value": "trailMap",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${rowKey}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${trPeak}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${TRAIL_FILE}",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "if",
+      "Target": "${trPeak} > -9999",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Math.round((Number(${trPeak}) - Number(${TRAIL_DROP})) * 100) / 100;",
+      "Value": "trStop",
+      "Description": ""
+    },
+    {
+      "Command": "echo",
+      "Target": "TRAIL ${pName}: margin ${pPct}% | puncak ${trPeak}% | sell di <= ${trStop}% (min profit ${MIN_PROFIT}%)",
+      "Value": "blue",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var c=Number(${pPct}); return (c <= Number(${trStop}) && c >= Number(${MIN_PROFIT})) ? 1 : 0;",
+      "Value": "sellNow",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "trailing stop: puncak ${trPeak}%, turun ke ${pPct}%",
+      "Value": "sellWhy",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${pPct}) >= Number(${tpCoin}) ? 1 : 0;",
+      "Value": "sellNow",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "TP ${tpCoin}%",
+      "Value": "sellWhy",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "if",
+      "Target": "${sellNow} == 1",
+      "Value": "",
+      "Description": "Sell? (trailing stop atau TP)"
     },
     {
       "Command": "store",
@@ -802,7 +1120,7 @@
     },
     {
       "Command": "echo",
-      "Target": "SELL: ${pName} (${pPct}% >= TP ${tpCoin}%)",
+      "Target": "SELL: ${pName} (${pPct}%) | ${sellWhy}",
       "Value": "green",
       "Description": "Info coin yang akan dijual dan TP yang dipakai"
     },
@@ -1303,6 +1621,60 @@
       "Target": "${SELL_LOG_FILE}",
       "Value": "",
       "Description": "Log sell: waktu, nama, nominal, margin, hasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${USE_TRAIL}) === 1 && String(${rowKey}) !== 'x') ? 1 : 0;",
+      "Value": "trDoReset",
+      "Description": ""
+    },
+    {
+      "Command": "if",
+      "Target": "${trDoReset} == 1",
+      "Value": "",
+      "Description": "Trailing: hapus puncak coin ini"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${trailMap});}catch(e){} delete m[${rowKey}]; return JSON.stringify(m);",
+      "Value": "trailMap",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${rowKey}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "RESET",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${TRAIL_FILE}",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
     },
     {
       "Command": "store",
@@ -1840,7 +2212,25 @@
     },
     {
       "Command": "store",
-      "Target": "4",
+      "Target": "10",
+      "Value": "!timeout_wait",
+      "Description": ""
+    },
+    {
+      "Command": "waitForElementPresent",
+      "Target": "xpath=//iframe[starts-with(@id,'tradingview')]",
+      "Value": "",
+      "Description": "Tunggu iframe chart TradingView muncul"
+    },
+    {
+      "Command": "pause",
+      "Target": "2000",
+      "Value": "",
+      "Description": "Beri waktu legend chart (RSI) dirender"
+    },
+    {
+      "Command": "store",
+      "Target": "2",
       "Value": "!timeout_wait",
       "Description": "Timeout pendek khusus pembacaan RSI"
     },
@@ -1852,9 +2242,9 @@
     },
     {
       "Command": "while",
-      "Target": "${rsi} < 0 && ${tries} < 3",
+      "Target": "${rsi} < 0 && ${tries} < 8",
       "Value": "",
-      "Description": "Coba baca RSI maksimal 3 kali sampai berhasil"
+      "Description": "Coba baca RSI maks 8x (chart TradingView kadang lambat dimuat)"
     },
     {
       "Command": "store",
@@ -1894,7 +2284,7 @@
     },
     {
       "Command": "pause",
-      "Target": "1000",
+      "Target": "1500",
       "Value": "",
       "Description": "RSI belum termuat, coba lagi"
     },
@@ -2131,6 +2521,60 @@
       "Target": "BOUGHT",
       "Value": "adResult",
       "Description": "Catat hasil AD: BOUGHT"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${USE_TRAIL}) === 1 && String(${rowKey}) !== 'x') ? 1 : 0;",
+      "Value": "trDoReset",
+      "Description": ""
+    },
+    {
+      "Command": "if",
+      "Target": "${trDoReset} == 1",
+      "Value": "",
+      "Description": "Trailing: hapus puncak coin ini"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${trailMap});}catch(e){} delete m[${rowKey}]; return JSON.stringify(m);",
+      "Value": "trailMap",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${rowKey}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "RESET",
+      "Value": "!csvLine",
+      "Description": ""
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${TRAIL_FILE}",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
     },
     {
       "Command": "executeScript_Sandbox",

@@ -15,12 +15,17 @@
     }
   },
   "profileName": "VagueCoralJay",
-  "startTokenUrl": "https://fomo.family/tokens/solana/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
+  "startTokenUrl": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
   "dryRunSell": true,
   "dryRunAd": true,
-  "tp": 20,
   "tpCustom": {},
   "exclude": [],
+  "minProfit": 20,
+  "trail": {
+    "enabled": false,
+    "start": 30,
+    "drop": 10
+  },
   "adTrigger": -25,
   "adMinAgeH": 6,
   "adUseRsi": true,
@@ -37,7 +42,8 @@
     "dir": "C:\\uivision\\datasources",
     "positionsFile": "fomo_positions.csv",
     "adLogFile": "fomo_ad_log.csv",
-    "sellLogFile": "fomo_sell_log.csv"
+    "sellLogFile": "fomo_sell_log.csv",
+    "trailFile": "fomo_trail.csv"
   },
   "wait": {
     "startLoadMs": 5000,
@@ -46,7 +52,7 @@
     "clickTimeoutMs": 5000,
     "elementTimeoutMs": 10000,
     "rsiTimeoutMs": 4000,
-    "rsiTries": 3,
+    "rsiTries": 6,
     "navTimeoutMs": 45000
   },
   "selectors": {
