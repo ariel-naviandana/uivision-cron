@@ -54,6 +54,7 @@ Kebutuhan saat dijalankan (taruh di folder yang sama dengan exe):
 Pemakaian:
   fomo-pw.exe          jalankan scanner sesuai jadwal di pw.config.json
   fomo-pw.exe login    login ke fomo.family (sekali saja), lalu tutup jendela Chrome
+  fomo-pw-login.bat    sama dengan "fomo-pw.exe login", tinggal double-click
 
 
 Catatan

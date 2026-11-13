@@ -65,6 +65,7 @@
     "rsiValue": "//div[@data-qa-id='legend-source-item'][contains(.,'RSI')]//div[@data-test-id-value-title='Plot']//div[contains(@class,'valueValue')]",
     "buyInput": "(//input[@placeholder='0' and contains(@class,'flex-1')])[1]",
     "buyButton": "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Buy ')]",
-    "minOrderButton": "//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]"
+    "minOrderButton": "//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]",
+    "insufficientButton": "//button[contains(translate(normalize-space(.),'INSUFFICIENTBALANCE','insufficientbalance'),'insufficient balance')]"
   }
 }

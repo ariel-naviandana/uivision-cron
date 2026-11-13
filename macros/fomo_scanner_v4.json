@@ -2175,6 +2175,66 @@
       "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Tombol Buy sesuai coin yang dicek?)"
     },
     {
+      "Command": "storeXpathCount",
+      "Target": "xpath=//button[contains(translate(normalize-space(.),'INSUFFICIENTBALANCE','insufficientbalance'),'insufficient balance')]",
+      "Value": "balCnt",
+      "Description": "Ada tombol \"Insufficient balance\"? (saldo tidak cukup)"
+    },
+    {
+      "Command": "storeXpathCount",
+      "Target": "xpath=//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]",
+      "Value": "minCnt",
+      "Description": "Ada tombol \"Minimum amount $X\"? (nominal di bawah minimum)"
+    },
+    {
+      "Command": "if",
+      "Target": "${balCnt} > 0",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "echo",
+      "Target": "AD ${pName} dibatalkan: saldo tidak cukup untuk beli $${invested}",
+      "Value": "orange",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "BUY_SALDO_KURANG",
+      "Value": "adResult",
+      "Description": ""
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "if",
+      "Target": "${minCnt} > 0",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "echo",
+      "Target": "AD ${pName} dibatalkan: nominal $${invested} di bawah minimum order",
+      "Value": "orange",
+      "Description": ""
+    },
+    {
+      "Command": "store",
+      "Target": "BUY_MIN_ORDER",
+      "Value": "adResult",
+      "Description": ""
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
       "Command": "echo",
       "Target": "Tombol buy tidak cocok (${buyText}), AD dibatalkan",
       "Value": "red",
@@ -2185,6 +2245,18 @@
       "Target": "BUY_MISMATCH",
       "Value": "adResult",
       "Description": "Catat hasil AD: BUY_MISMATCH"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
     },
     {
       "Command": "end",

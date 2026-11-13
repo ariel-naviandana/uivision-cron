@@ -65,6 +65,11 @@ class FomoScanner {
         return this.text(this.x(this.sel.minOrderButton), 1500);
     }
 
+    // Teks tombol "Insufficient balance" (saldo tidak cukup untuk nominal buy), null kalau tidak ada
+    async insufficientText() {
+        return this.text(this.x(this.sel.insufficientButton), 1500);
+    }
+
     tpFor(name) {
         const v = this.cfg.tpMap[name.toLowerCase()];
         return Number.isFinite(v) ? v : Number(this.cfg.tp);
@@ -350,6 +355,15 @@ class FomoScanner {
                     d.result = 'BUY_MIN_ORDER';
                     return;
                 }
+            }
+        }
+
+        if (!buyText) {
+            const balText = await this.insufficientText();
+            if (balText) {
+                log(`AD ${name} dibatalkan: saldo tidak cukup untuk beli $${amount} (${balText})`, 'warn');
+                d.result = 'BUY_SALDO_KURANG';
+                return;
             }
         }
 
