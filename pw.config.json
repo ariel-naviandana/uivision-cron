@@ -14,7 +14,8 @@
       "height": 1000
     }
   },
-  "profileUrl": "https://fomo.family/profile/VagueCoralJay?r=VagueCoralJay",
+  "profileName": "VagueCoralJay",
+  "startTokenUrl": "https://fomo.family/tokens/solana/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
   "dryRunSell": true,
   "dryRunAd": true,
   "tp": 20,
@@ -39,9 +40,8 @@
     "sellLogFile": "fomo_sell_log.csv"
   },
   "wait": {
-    "profileLoadMs": 5000,
-    "popupMs": 3000,
-    "detailMs": 4000,
+    "startLoadMs": 5000,
+    "detailMs": 5000,
     "afterActionMs": 2000,
     "clickTimeoutMs": 5000,
     "elementTimeoutMs": 10000,
@@ -50,14 +50,13 @@
     "navTimeoutMs": 45000
   },
   "selectors": {
-    "row": "(//button[@data-slot='hover-card-trigger'][.//div[contains(@class,'w-24')]])",
+    "row": "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
+    "dustButton": "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",
     "rowName": ".//div[contains(@class,'text-sm') and contains(@class,'truncate')]",
     "rowValue": ".//div[contains(@class,'w-24')]",
     "sellButton": "//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
-    "sell100": "//button[normalize-space(text())='100%']",
+    "sell100": "//fieldset//button[normalize-space(text())='100%']",
     "sellConfirm": "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Sell ')]",
-    "popupName": "//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')]//div[contains(@class,'text-lg')]",
-    "popupIcon": "//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')][.//div[contains(@class,'text-lg')]]//img",
     "detailAge": "(//span[@title and @translate='no' and contains(@class,'text-xs') and contains(@class,'text-text-secondary') and contains(@class,'shrink-0')])[1]",
     "detailMarketCap": "//div[normalize-space(text())='Market cap']/following-sibling::div[1]",
     "detailInvested": "//div[normalize-space(text())='Invested']/following-sibling::div[1]",

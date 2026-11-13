@@ -3,7 +3,10 @@ node_modules/
 
 # Build output
 dist/
-build/
+# build/: file perantara build exe (bundle .js, .blob) tidak di-commit, config SEA tetap
+build/*
+!build/sea-config.json
+!build/sea-pw.json
 out/
 
 # Environment and secrets
@@ -33,3 +36,6 @@ coverage/
 Thumbs.db
 .idea/
 .vscode/
+
+# Hasil build exe (dibuat lokal, lihat docs/build-exe.md)
+*.exe

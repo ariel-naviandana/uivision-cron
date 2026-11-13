@@ -92,7 +92,7 @@ async function shutdown() {
 (async () => {
     console.log('='.repeat(56));
     console.log('✅ FOMO SCANNER (Playwright) AKTIF');
-    console.log(`   Profil fomo : ${cfg.profileUrl}`);
+    console.log(`   Halaman awal: ${cfg.startUrl}`);
     console.log(`   Jadwal      : ${cfg.schedule || 'tanpa jadwal (jalan terus)'} | zona ${cfg.timezone}`);
     console.log(`   Run saat start: ${cfg.runOnStart ? 'ya' : 'tidak'} | restart Chrome tiap jadwal: ${cfg.restartBrowser ? 'ya' : 'tidak'}`);
     console.log(`   Chrome      : ${cfg.browser.userDataDir} (headless: ${cfg.browser.headless ? 'ya' : 'tidak'})`);

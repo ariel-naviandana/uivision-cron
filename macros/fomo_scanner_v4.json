@@ -1,6 +1,6 @@
 {
-  "Name": "fomo_scanner",
-  "CreationDate": "2026-11-3",
+  "Name": "fomo_scanner_v4",
+  "CreationDate": "2026-11-13",
   "Commands": [
     {
       "Command": "comment",
@@ -10,9 +10,21 @@
     },
     {
       "Command": "store",
-      "Target": "https://fomo.family/profile/VagueCoralJay?r=VagueCoralJay",
-      "Value": "PROFILE_URL",
-      "Description": "Alamat halaman profil fomo yang dipantau"
+      "Target": "VagueCoralJay",
+      "Value": "PROFILE_NAME",
+      "Description": "Nama profil fomo (cukup ubah ini)"
+    },
+    {
+      "Command": "store",
+      "Target": "https://fomo.family/tokens/solana/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
+      "Value": "START_TOKEN_URL",
+      "Description": "Halaman awal scan: detail coin apa saja (tanpa ?r=). Posisi dibaca dari panel \"Your positions\""
+    },
+    {
+      "Command": "store",
+      "Target": "${START_TOKEN_URL}?r=${PROFILE_NAME}",
+      "Value": "START_URL",
+      "Description": "URL halaman awal lengkap (otomatis dari 2 variabel di atas)"
     },
     {
       "Command": "store",
@@ -84,7 +96,7 @@
       "Command": "store",
       "Target": "4",
       "Value": "RELOAD_EVERY",
-      "Description": "Reload profil paksa tiap N scan tanpa pindah halaman. 0 = reload tiap scan"
+      "Description": "Reload halaman awal paksa tiap N scan tanpa pindah halaman. 0 = reload tiap scan"
     },
     {
       "Command": "store",
@@ -102,7 +114,7 @@
       "Command": "store",
       "Target": "60000",
       "Value": "ERR_PAUSE",
-      "Description": "Jeda (ms) setelah halaman fomo bermasalah, sebelum profil dimuat ulang"
+      "Description": "Jeda (ms) setelah halaman fomo bermasalah, sebelum halaman awal dimuat ulang"
     },
     {
       "Command": "store",
@@ -124,9 +136,9 @@
     },
     {
       "Command": "store",
-      "Target": "(//button[@data-slot='hover-card-trigger'][.//div[contains(@class,'w-24')]])",
+      "Target": "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
       "Value": "ROW",
-      "Description": "XPath semua baris posisi (tanpa prefix xpath=)"
+      "Description": "XPath semua baris posisi di panel \"Your positions\" (tanpa prefix xpath=)"
     },
     {
       "Command": "store",
@@ -150,13 +162,13 @@
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "1 = harus buka profil di siklus berikutnya"
+      "Description": "1 = harus buka halaman awal di siklus berikutnya"
     },
     {
       "Command": "store",
       "Target": "0",
       "Value": "sinceOpen",
-      "Description": "Jumlah scan sejak terakhir buka profil"
+      "Description": "Jumlah scan sejak terakhir buka halaman awal"
     },
     {
       "Command": "store",
@@ -186,7 +198,7 @@
       "Command": "comment",
       "Target": "=== LOOP UTAMA ===",
       "Value": "",
-      "Description": "Siklus utama: buka profil, scroll, scan, keputusan, aksi, ulangi"
+      "Description": "Siklus utama: buka halaman awal, scroll, scan, keputusan, aksi, ulangi"
     },
     {
       "Command": "while",
@@ -210,25 +222,25 @@
       "Command": "if",
       "Target": "${sinceOpen} >= ${RELOAD_EVERY}",
       "Value": "",
-      "Description": "Sudah waktunya reload profil berkala?"
+      "Description": "Sudah waktunya reload halaman awal berkala?"
     },
     {
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "Tandai: profil harus dibuka ulang"
+      "Description": "Tandai: halaman awal harus dibuka ulang"
     },
     {
       "Command": "end",
       "Target": "",
       "Value": "",
-      "Description": "Akhir blok: Sudah waktunya reload profil berkala?"
+      "Description": "Akhir blok: Sudah waktunya reload halaman awal berkala?"
     },
     {
       "Command": "store",
       "Target": "true",
       "Value": "!errorIgnore",
-      "Description": "Mulai blok aman: gagal membuka/membaca profil tidak menghentikan macro, hasilnya dicek lewat status"
+      "Description": "Mulai blok aman: gagal membuka/membaca halaman awal tidak menghentikan macro, hasilnya dicek lewat status"
     },
     {
       "Command": "store",
@@ -240,13 +252,13 @@
       "Command": "if",
       "Target": "${needOpen} == 1",
       "Value": "",
-      "Description": "Profil perlu dibuka ulang?"
+      "Description": "Halaman awal perlu dibuka ulang?"
     },
     {
       "Command": "open",
-      "Target": "${PROFILE_URL}",
+      "Target": "${START_URL}",
       "Value": "",
-      "Description": "Buka profil hanya jika perlu"
+      "Description": "Buka halaman awal hanya jika perlu"
     },
     {
       "Command": "pause",
@@ -258,37 +270,73 @@
       "Command": "store",
       "Target": "0",
       "Value": "needOpen",
-      "Description": "Hapus tanda: profil sudah dibuka"
+      "Description": "Hapus tanda: halaman awal sudah dibuka"
     },
     {
       "Command": "store",
       "Target": "0",
       "Value": "sinceOpen",
-      "Description": "Reset hitungan scan sejak profil dibuka"
+      "Description": "Reset hitungan scan sejak halaman awal dibuka"
     },
     {
       "Command": "else",
       "Target": "",
       "Value": "",
-      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Profil perlu dibuka ulang?)"
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Halaman awal perlu dibuka ulang?)"
     },
     {
       "Command": "echo",
       "Target": "Tidak pindah halaman, scan ulang di halaman yang sama",
       "Value": "blue",
-      "Description": "Info: profil tidak dibuka ulang, scan di halaman yang sama"
+      "Description": "Info: halaman awal tidak dibuka ulang, scan di halaman yang sama"
     },
     {
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${sinceOpen}) + 1;",
       "Value": "sinceOpen",
-      "Description": "Tambah 1 hitungan scan sejak profil dibuka"
+      "Description": "Tambah 1 hitungan scan sejak halaman awal dibuka"
     },
     {
       "Command": "end",
       "Target": "",
       "Value": "",
-      "Description": "Akhir blok: Profil perlu dibuka ulang?"
+      "Description": "Akhir blok: Halaman awal perlu dibuka ulang?"
+    },
+    {
+      "Command": "comment",
+      "Target": "--- SHOW DUST: buka list dust supaya semua posisi ikut terbaca ---",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "storeXpathCount",
+      "Target": "xpath=//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",
+      "Value": "dustCnt",
+      "Description": "Ada tombol \"Show dust (N)\"? (kalau sudah \"Hide dust\" = 0)"
+    },
+    {
+      "Command": "if",
+      "Target": "${dustCnt} > 0",
+      "Value": "",
+      "Description": ""
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=(//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')])[1]",
+      "Value": "",
+      "Description": "Klik Show dust"
+    },
+    {
+      "Command": "pause",
+      "Target": "1500",
+      "Value": "",
+      "Description": "Tunggu list dust terbuka"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": ""
     },
     {
       "Command": "comment",
@@ -324,7 +372,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
       "Value": "pageOk",
-      "Description": "1 = profil terbuka dan list terbaca tanpa error, 0 = halaman bermasalah"
+      "Description": "1 = halaman awal terbuka dan list terbaca tanpa error, 0 = halaman bermasalah"
     },
     {
       "Command": "store",
@@ -444,7 +492,7 @@
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "Paksa buka ulang profil di siklus berikutnya"
+      "Description": "Paksa buka ulang halaman awal di siklus berikutnya"
     },
     {
       "Command": "end",
@@ -546,7 +594,7 @@
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "Paksa buka ulang profil di siklus berikutnya"
+      "Description": "Paksa buka ulang halaman awal di siklus berikutnya"
     },
     {
       "Command": "store",
@@ -558,7 +606,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+      "Description": "Lanjut ke coin berikutnya setelah halaman awal dimuat ulang"
     },
     {
       "Command": "executeScript_Sandbox",
@@ -642,7 +690,7 @@
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "Paksa buka ulang profil di siklus berikutnya"
+      "Description": "Paksa buka ulang halaman awal di siklus berikutnya"
     },
     {
       "Command": "store",
@@ -654,7 +702,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+      "Description": "Lanjut ke coin berikutnya setelah halaman awal dimuat ulang"
     },
     {
       "Command": "executeScript_Sandbox",
@@ -750,13 +798,37 @@
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "Popup dibuka -> siklus berikutnya wajib kembali ke profil"
+      "Description": "Popup dibuka -> siklus berikutnya wajib kembali ke halaman awal"
     },
     {
       "Command": "echo",
       "Target": "SELL: ${pName} (${pPct}% >= TP ${tpCoin}%)",
       "Value": "green",
       "Description": "Info coin yang akan dijual dan TP yang dipakai"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Blok aman: baca link baris"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "rowHref",
+      "Description": "Reset link baris"
+    },
+    {
+      "Command": "storeAttribute",
+      "Target": "xpath=${ROW}[${k}]@href",
+      "Value": "rowHref",
+      "Description": "Link detail coin dari baris ini, contoh /tokens/solana/<CA>"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman"
     },
     {
       "Command": "store",
@@ -924,7 +996,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+      "Description": "Lanjut ke coin berikutnya setelah halaman awal dimuat ulang"
     },
     {
       "Command": "else",
@@ -964,9 +1036,15 @@
     },
     {
       "Command": "pause",
-      "Target": "3000",
+      "Target": "5000",
       "Value": "",
-      "Description": "Tunggu popup coin muncul"
+      "Description": "Tunggu halaman detail coin termuat (klik baris langsung pindah ke detail coin)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!URL}).indexOf(String(${rowHref}).split('?')[0]) >= 0) ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Pastikan halaman detail yang terbuka sesuai coin yang diklik (cek URL)"
     },
     {
       "Command": "waitForElementPresent",
@@ -1000,9 +1078,9 @@
     },
     {
       "Command": "click",
-      "Target": "xpath=//button[normalize-space(text())='100%']",
+      "Target": "xpath=//fieldset//button[normalize-space(text())='100%']",
       "Value": "",
-      "Description": "Klik tombol 100%"
+      "Description": "Klik 100% di form Sell (dibatasi fieldset supaya tidak kena tombol 100% instant actions)"
     },
     {
       "Command": "executeScript_Sandbox",
@@ -1030,7 +1108,7 @@
     },
     {
       "Command": "executeScript_Sandbox",
-      "Target": "return (Number(${flowOk}) === 1 && ${finalText} === 'Sell ' + ${pName}) ? 1 : 0;",
+      "Target": "return (Number(${flowOk}) === 1 && String(${finalText}).trim().toLowerCase() === ('sell ' + String(${pName})).trim().toLowerCase()) ? 1 : 0;",
       "Value": "ok",
       "Description": "1 = semua langkah di popup sukses DAN tombol konfirmasi sesuai coin yang dicek"
     },
@@ -1098,7 +1176,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Dry run: coin masih ada di list, lanjut ke coin berikutnya setelah balik ke profil"
+      "Description": "Dry run: coin masih ada di list, lanjut ke coin berikutnya setelah balik ke halaman awal"
     },
     {
       "Command": "else",
@@ -1248,7 +1326,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+      "Description": "Lanjut ke coin berikutnya setelah halaman awal dimuat ulang"
     },
     {
       "Command": "end",
@@ -1314,7 +1392,7 @@
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Lanjut ke coin berikutnya setelah balik ke profil"
+      "Description": "Lanjut ke coin berikutnya setelah balik ke halaman awal"
     },
     {
       "Command": "end",
@@ -1417,6 +1495,30 @@
       "Target": "x",
       "Value": "buyText",
       "Description": "Reset teks tombol Buy (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Blok aman: baca link baris"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "rowHref",
+      "Description": "Reset link baris"
+    },
+    {
+      "Command": "storeAttribute",
+      "Target": "xpath=${ROW}[${k}]@href",
+      "Value": "rowHref",
+      "Description": "Link detail coin dari baris ini, contoh /tokens/solana/<CA>"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman"
     },
     {
       "Command": "store",
@@ -1564,9 +1666,9 @@
     },
     {
       "Command": "pause",
-      "Target": "3000",
+      "Target": "5000",
       "Value": "",
-      "Description": "Tunggu popup coin muncul"
+      "Description": "Tunggu halaman detail coin termuat (klik baris langsung pindah ke detail coin)"
     },
     {
       "Command": "store",
@@ -1582,15 +1684,15 @@
     },
     {
       "Command": "waitForElementPresent",
-      "Target": "xpath=//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')]//div[contains(@class,'text-lg')]",
+      "Target": "xpath=//div[normalize-space(text())='Market cap']/following-sibling::div[1]",
       "Value": "",
-      "Description": "Tunggu nama coin di popup muncul"
+      "Description": "Tunggu halaman detail (market cap) termuat"
     },
     {
-      "Command": "storeText",
-      "Target": "xpath=//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')]//div[contains(@class,'text-lg')]",
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!URL});",
       "Value": "popName",
-      "Description": "Baca nama coin di popup"
+      "Description": "URL halaman yang terbuka (untuk log kalau tidak cocok)"
     },
     {
       "Command": "store",
@@ -1600,9 +1702,9 @@
     },
     {
       "Command": "executeScript_Sandbox",
-      "Target": "return (${popName} == ${pName}) ? 1 : 0;",
+      "Target": "return String(${!URL}).indexOf(String(${rowHref}).split('?')[0]) >= 0 ? 1 : 0;",
       "Value": "popOk",
-      "Description": "Verifikasi nama coin di popup"
+      "Description": "1 = halaman detail yang terbuka sesuai coin yang diklik (cek URL)"
     },
     {
       "Command": "if",
@@ -1617,16 +1719,16 @@
       "Description": "Mulai blok aman: gagal buka halaman detail tidak menghentikan macro (nilai tetap -1, AD dibatalkan)"
     },
     {
-      "Command": "click",
-      "Target": "xpath=//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')][.//div[contains(@class,'text-lg')]]//img",
+      "Command": "comment",
+      "Target": "Tidak perlu klik icon popup: sudah di halaman detail coin",
       "Value": "",
-      "Description": "Klik icon coin lagi -> halaman detail coin"
+      "Description": ""
     },
     {
       "Command": "pause",
-      "Target": "4000",
+      "Target": "1000",
       "Value": "",
-      "Description": "Tunggu halaman detail dan chart termuat"
+      "Description": "Beri waktu chart & detail termuat"
     },
     {
       "Command": "store",
@@ -2154,19 +2256,19 @@
       "Command": "store",
       "Target": "true",
       "Value": "!errorIgnore",
-      "Description": "Mulai blok aman: kembali ke profil, kalau gagal akan terdeteksi di siklus berikutnya"
+      "Description": "Mulai blok aman: kembali ke halaman awal, kalau gagal akan terdeteksi di siklus berikutnya"
     },
     {
       "Command": "open",
-      "Target": "${PROFILE_URL}",
+      "Target": "${START_URL}",
       "Value": "",
-      "Description": "Kembali ke profil"
+      "Description": "Kembali ke halaman awal"
     },
     {
       "Command": "pause",
       "Target": "5000",
       "Value": "",
-      "Description": "Tunggu profil termuat setelah kembali"
+      "Description": "Tunggu halaman awal termuat setelah kembali"
     },
     {
       "Command": "store",
@@ -2178,19 +2280,19 @@
       "Command": "store",
       "Target": "0",
       "Value": "needOpen",
-      "Description": "Hapus tanda: profil sudah dibuka"
+      "Description": "Hapus tanda: halaman awal sudah dibuka"
     },
     {
       "Command": "store",
       "Target": "0",
       "Value": "sinceOpen",
-      "Description": "Reset hitungan scan sejak profil dibuka"
+      "Description": "Reset hitungan scan sejak halaman awal dibuka"
     },
     {
       "Command": "executeScript_Sandbox",
       "Target": "return Number(${k}) + 1;",
       "Value": "resumeK",
-      "Description": "Lanjut ke coin berikutnya setelah balik ke profil, bukan dari coin pertama"
+      "Description": "Lanjut ke coin berikutnya setelah balik ke halaman awal, bukan dari coin pertama"
     },
     {
       "Command": "executeScript_Sandbox",
@@ -2310,7 +2412,7 @@
       "Command": "store",
       "Target": "1",
       "Value": "needOpen",
-      "Description": "Paksa buka ulang profil di siklus berikutnya"
+      "Description": "Paksa buka ulang halaman awal di siklus berikutnya"
     },
     {
       "Command": "pause",

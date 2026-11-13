@@ -5,7 +5,8 @@ const path = require('path');
 
 // Folder tempat exe berada. Kalau dijalankan lewat "node index.js", pakai folder script.
 const isExe = path.basename(process.execPath).toLowerCase() !== 'node.exe';
-const BASE_DIR = isExe ? path.dirname(process.execPath) : __dirname;
+// config.json ada di root project (folder di atas scheduler/), atau di folder exe
+const BASE_DIR = isExe ? path.dirname(process.execPath) : path.join(__dirname, '..');
 
 // Nilai bawaan kalau config.json tidak ada atau ada key yang kosong
 const defaults = {

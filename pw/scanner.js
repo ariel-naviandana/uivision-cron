@@ -1,5 +1,7 @@
-// pw/scanner.js — port Playwright dari macro UI.Vision fomo_scanner_v3
-// Alur per siklus: buka profil (kalau perlu) -> scroll muat semua posisi -> scan tiap coin:
+// pw/scanner.js — port Playwright dari macro UI.Vision fomo_scanner_v4
+// Halaman awal = detail coin apa saja (startUrl), posisi dibaca dari panel "Your positions".
+// Klik baris posisi langsung membuka detail coin itu (tidak ada popup seperti di profil).
+// Alur per siklus: buka halaman awal (kalau perlu) -> scroll muat semua posisi -> scan tiap coin:
 //   - margin >= TP coin            -> SELL (Sell -> 100% -> konfirmasi "Sell <nama>")
 //   - margin <= adTrigger (belum ada aksi) -> cek AD di halaman detail (umur, RSI, MC < avg, invested)
 //                                            -> kalau lolos: isi nominal = invested, Buy
@@ -69,10 +71,19 @@ class FomoScanner {
     }
 
     async openProfile() {
-        await this.page.goto(this.cfg.profileUrl, { waitUntil: 'domcontentloaded' });
-        await sleep(this.cfg.wait.profileLoadMs);
+        await this.page.goto(this.cfg.startUrl, { waitUntil: 'domcontentloaded' });
+        await sleep(this.cfg.wait.startLoadMs);
         this.needOpen = false;
         this.sinceOpen = 0;
+    }
+
+    // Klik "Show dust (N)" kalau list dust masih tertutup (posisi kecil ada di dalamnya)
+    async openDust() {
+        const btn = this.x(this.sel.dustButton).first();
+        if (await btn.count().catch(() => 0)) {
+            await btn.click({ timeout: this.cfg.wait.clickTimeoutMs }).catch(() => log('Klik Show dust gagal', 'warn'));
+            await sleep(1500);
+        }
     }
 
     // Scroll sampai jumlah baris tidak bertambah (maks 8 kali). Return null kalau halaman bermasalah.
@@ -113,6 +124,25 @@ class FomoScanner {
         return false;
     }
 
+    // Link detail coin dari baris k, contoh /tokens/solana/<CA>
+    async rowHref(k) {
+        return this.rowLoc(k).getAttribute('href', { timeout: 3000 }).catch(() => null);
+    }
+
+    // Setelah klik baris: tunggu halaman detail coin terbuka dan URL-nya sesuai link baris
+    async onDetailOf(href, name) {
+        const path = String(href || '').split('?')[0];
+        if (!path) {
+            log(`Link baris ${name} tidak terbaca`, 'err');
+            return false;
+        }
+        await this.page.waitForURL((u) => u.toString().includes(path), { timeout: this.cfg.wait.elementTimeoutMs }).catch(() => {});
+        await sleep(this.cfg.wait.detailMs);
+        if (this.page.url().includes(path)) return true;
+        log(`Halaman detail ${name} tidak terbuka (url: ${this.page.url()})`, 'err');
+        return false;
+    }
+
     markFail(name, ok) {
         const key = name.toLowerCase();
         this.failMap[key] = ok ? 0 : (this.failMap[key] || 0) + 1;
@@ -128,6 +158,7 @@ class FomoScanner {
         log(`SELL: ${name} (${pct}% >= TP ${tp}%)`, 'ok');
         this.needOpen = true;
 
+        const href = await this.rowHref(k);
         if (!(await this.clickRowIcon(k, name))) {
             log(`COIN TIDAK BISA DIKLIK: ${name}. Dilewati`, 'err');
             this.markFail(name, false);
@@ -137,10 +168,9 @@ class FomoScanner {
         }
         this.markFail(name, true);
 
-        let flowOk = true;
+        let flowOk = await this.onDetailOf(href, name);
         let finalText = null;
-        try {
-            await sleep(W.popupMs);
+        if (flowOk) try {
             await this.x(this.sel.sellButton).first().click({ timeout: W.elementTimeoutMs });
             await sleep(500);
             await this.x(this.sel.sell100).first().click({ timeout: W.elementTimeoutMs });
@@ -150,7 +180,7 @@ class FomoScanner {
             flowOk = false;
         }
 
-        if (!finalText) {
+        if (flowOk && !finalText) {
             const minText = await this.minOrderText();
             if (minText) {
                 log(`SELL DIBATALKAN: posisi ${name} ($${nominal}) di bawah minimum (${minText})`, 'warn');
@@ -160,7 +190,7 @@ class FomoScanner {
             }
         }
         if (!(flowOk && FomoScanner.actionMatch(finalText, 'Sell', name))) {
-            log(`Coin di popup tidak cocok (${finalText}), sell dibatalkan`, 'err');
+            log(`Coin di halaman detail tidak cocok (${finalText}), sell dibatalkan`, 'err');
             this.logSell(ts, name, nominal, pct, 'MISMATCH');
             this.resumeK = k + 1;
             return;
@@ -225,22 +255,16 @@ class FomoScanner {
         const d = { ageH: -1, mcNow: -1, avgMC: -1, invested: -1, rsi: -1, result: 'POPUP_MISMATCH' };
         log(`KANDIDAT AD: ${name} (${pct}%) -> cek detail coin`, 'warn');
 
+        const href = await this.rowHref(k);
         if (!(await this.clickRowIcon(k, name))) {
             log(`COIN TIDAK BISA DIKLIK: ${name}. AD dibatalkan`, 'err');
             this.markFail(name, false);
             d.result = 'CLICK_GAGAL';
         } else {
             this.markFail(name, true);
-            await sleep(W.popupMs);
-            const popName = await this.text(this.x(this.sel.popupName), W.elementTimeoutMs);
-
-            if (!FomoScanner.same(popName, name)) {
-                log(`Popup coin tidak cocok (${popName}), AD dibatalkan`, 'err');
+            if (!(await this.onDetailOf(href, name))) {
+                log(`AD ${name} dibatalkan (halaman detail tidak sesuai)`, 'err');
             } else {
-                try {
-                    await this.x(this.sel.popupIcon).first().click({ timeout: W.elementTimeoutMs });
-                } catch { /* lanjut, pembacaan detail akan gagal kalau halaman tidak terbuka */ }
-                await sleep(W.detailMs);
                 for (const s of [this.sel.detailMarketCap, this.sel.detailInvested, this.sel.detailAvgEntry]) {
                     await this.x(s).first().waitFor({ timeout: W.elementTimeoutMs }).catch(() => {});
                 }
@@ -271,7 +295,7 @@ class FomoScanner {
 
         appendCsv(this.out.dir, this.out.adLogFile, [ts, name, d.ageH, d.rsi, d.mcNow, d.avgMC, d.invested, d.result]);
 
-        // kembali ke profil, lanjut dari coin berikutnya
+        // kembali ke halaman awal, lanjut dari coin berikutnya
         await this.openProfile().catch(() => { this.needOpen = true; });
         this.resumeK = k + 1;
     }
@@ -366,14 +390,15 @@ class FomoScanner {
                 this.sinceOpen++;
             }
         } catch (e) {
-            log(`Gagal membuka profil: ${e.message}`, 'err');
+            log(`Gagal membuka halaman awal: ${e.message}`, 'err');
         }
 
+        await this.openDust();
         const n = await this.loadAllRows();
         if (n === null) {
             this.pageFail++;
             log(`HALAMAN FOMO BERMASALAH. Kegagalan berturut-turut: ${this.pageFail}. `
-                + `Menunggu ${this.cfg.errPauseMs} ms lalu memuat ulang profil`, 'err');
+                + `Menunggu ${this.cfg.errPauseMs} ms lalu memuat ulang halaman awal`, 'err');
             this.needOpen = true;
             await this.wait(this.cfg.errPauseMs);
             return;
@@ -381,7 +406,7 @@ class FomoScanner {
         this.pageFail = 0;
         log(`${n} posisi terbaca`);
         if (n === 0) {
-            log('0 posisi terbaca, profil dimuat ulang di siklus berikutnya', 'warn');
+            log('0 posisi terbaca, halaman awal dimuat ulang di siklus berikutnya', 'warn');
             this.needOpen = true;
         }
 

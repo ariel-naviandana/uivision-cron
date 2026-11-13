@@ -20,7 +20,9 @@ const DEFAULTS = {
         blockResources: false,
         viewport: { width: 1600, height: 1000 },
     },
-    profileUrl: 'https://fomo.family/profile/VagueCoralJay?r=VagueCoralJay',
+    profileName: 'VagueCoralJay',  // nama profil fomo (cukup ubah ini)
+    // Halaman awal scan: detail coin apa saja (tanpa ?r=), posisi dibaca dari panel "Your positions"
+    startTokenUrl: 'https://fomo.family/tokens/solana/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
     dryRunSell: true,
     dryRunAd: true,
     tp: 20,
@@ -45,9 +47,8 @@ const DEFAULTS = {
         sellLogFile: 'fomo_sell_log.csv',
     },
     wait: {
-        profileLoadMs: 5000,
-        popupMs: 3000,
-        detailMs: 4000,
+        startLoadMs: 5000,  // tunggu halaman awal termuat
+        detailMs: 5000,     // tunggu detail coin termuat setelah klik baris posisi
         afterActionMs: 2000,
         clickTimeoutMs: 5000,
         elementTimeoutMs: 10000,
@@ -56,14 +57,13 @@ const DEFAULTS = {
         navTimeoutMs: 45000,
     },
     selectors: {
-        row: "(//button[@data-slot='hover-card-trigger'][.//div[contains(@class,'w-24')]])",
+        row: "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
+        dustButton: "//button[@data-slot='accordion-trigger'][starts-with(normalize-space(.),'Show dust')]",
         rowName: ".//div[contains(@class,'text-sm') and contains(@class,'truncate')]",
         rowValue: ".//div[contains(@class,'w-24')]",
         sellButton: "//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
-        sell100: "//button[normalize-space(text())='100%']",
+        sell100: "//fieldset//button[normalize-space(text())='100%']",
         sellConfirm: "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Sell ')]",
-        popupName: "//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')]//div[contains(@class,'text-lg')]",
-        popupIcon: "//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')][.//div[contains(@class,'text-lg')]]//img",
         detailAge: "(//span[@title and @translate='no' and contains(@class,'text-xs') and contains(@class,'text-text-secondary') and contains(@class,'shrink-0')])[1]",
         detailMarketCap: "//div[normalize-space(text())='Market cap']/following-sibling::div[1]",
         detailInvested: "//div[normalize-space(text())='Invested']/following-sibling::div[1]",
@@ -95,6 +95,11 @@ function loadPwConfig() {
         console.log(`pw.config.json tidak ditemukan/rusak di ${file} (${e.message}), pakai nilai bawaan`);
     }
     const cfg = merge(DEFAULTS, user);
+    // URL halaman awal lengkap = startTokenUrl + ?r=profileName
+    cfg.startUrl = `${String(cfg.startTokenUrl).split('?')[0]}?r=${encodeURIComponent(String(cfg.profileName).trim())}`;
+    // kompatibel dengan config lama (wait.profileLoadMs). profileUrl lama sengaja diabaikan:
+    // selector baris sekarang untuk panel "Your positions" di halaman detail coin, bukan profil.
+    if (user.wait && user.wait.startLoadMs == null && user.wait.profileLoadMs != null) cfg.wait.startLoadMs = user.wait.profileLoadMs;
     require('./util').setTimezone(cfg.timezone);
     // normalisasi daftar nama (huruf kecil) untuk pencocokan
     cfg.excludeSet = new Set((cfg.exclude || []).map((x) => String(x).trim().toLowerCase()).filter(Boolean));

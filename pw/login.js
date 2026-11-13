@@ -20,7 +20,7 @@ const child = spawn(chromePath, [
     '--no-first-run',
     '--no-default-browser-check',
     '--new-window',
-    cfg.profileUrl,
+    cfg.startUrl,
 ], { stdio: 'ignore' });
 
 child.on('error', (e) => {

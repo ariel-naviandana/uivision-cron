@@ -1,0 +1,2340 @@
+{
+  "Name": "fomo_scanner",
+  "CreationDate": "2026-11-3",
+  "Commands": [
+    {
+      "Command": "comment",
+      "Target": "=== CONFIG ===",
+      "Value": "",
+      "Description": "Bagian pengaturan: semua variabel yang bisa diubah ada di sini"
+    },
+    {
+      "Command": "store",
+      "Target": "https://fomo.family/profile/VagueCoralJay?r=VagueCoralJay",
+      "Value": "PROFILE_URL",
+      "Description": "Alamat halaman profil fomo yang dipantau"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "DRY_RUN_SELL",
+      "Description": "SELL: 1 = dry run (berhenti sebelum klik Sell terakhir), 0 = jual beneran"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "DRY_RUN_AD",
+      "Description": "AD: 1 = dry run (isi nominal tapi berhenti sebelum klik Buy), 0 = beli beneran"
+    },
+    {
+      "Command": "store",
+      "Target": "20",
+      "Value": "TP",
+      "Description": "TP default: sell jika margin >= TP (%), kecuali coin tersebut ada di TP_CUSTOM"
+    },
+    {
+      "Command": "store",
+      "Target": "",
+      "Value": "EXCLUDE",
+      "Description": "Coin yang dilewati total (tidak dibaca, tidak dilog, tidak di-sell/AD). Pisahkan dengan |, contoh: E/ACC|COLLECTOOOR. Kosong = tidak ada. Tidak peka huruf besar/kecil."
+    },
+    {
+      "Command": "store",
+      "Target": "",
+      "Value": "TP_CUSTOM",
+      "Description": "TP khusus per coin, format NAMA:TP dipisah |, contoh: E/ACC:10|COLLECTOOOR:30. Coin yang tidak tercantum memakai TP default di atas. Kosong = semua pakai TP default."
+    },
+    {
+      "Command": "store",
+      "Target": "-25",
+      "Value": "AD_TRIGGER",
+      "Description": "Margin (%) yang memicu pengecekan AD: jika margin <= AD_TRIGGER, coin jadi kandidat AD (bukan stop loss, tidak menjual)"
+    },
+    {
+      "Command": "store",
+      "Target": "6",
+      "Value": "AD_MIN_AGE_H",
+      "Description": "AD: umur coin minimal (jam). 6h=6, 1d=24, 1w=168"
+    },
+    {
+      "Command": "store",
+      "Target": "30",
+      "Value": "AD_RSI_MAX",
+      "Description": "AD: RSI harus di bawah angka ini"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "AD_USE_RSI",
+      "Description": "1 = RSI jadi syarat AD (dibaca dari chart), 0 = RSI dilewati"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "MAX_LOOP",
+      "Description": "Batas jumlah siklus scan total (ada sell/AD atau tidak tetap dihitung). 0 = jalan terus tanpa henti"
+    },
+    {
+      "Command": "store",
+      "Target": "6000",
+      "Value": "SCAN_INTERVAL",
+      "Description": "Jeda antar scan (ms) kalau tidak ada aksi"
+    },
+    {
+      "Command": "store",
+      "Target": "4",
+      "Value": "RELOAD_EVERY",
+      "Description": "Reload profil paksa tiap N scan tanpa pindah halaman. 0 = reload tiap scan"
+    },
+    {
+      "Command": "store",
+      "Target": "3",
+      "Value": "CLICK_TRIES",
+      "Description": "Jumlah percobaan klik icon coin sebelum dianggap gagal diklik"
+    },
+    {
+      "Command": "store",
+      "Target": "3",
+      "Value": "CLICK_FAIL_MAX",
+      "Description": "Coin yang gagal diklik pada N siklus berturut-turut dilewati otomatis sampai macro dihentikan (EXCLUDE otomatis untuk coin aneh yang muncul saat macro berjalan)"
+    },
+    {
+      "Command": "store",
+      "Target": "60000",
+      "Value": "ERR_PAUSE",
+      "Description": "Jeda (ms) setelah halaman fomo bermasalah, sebelum profil dimuat ulang"
+    },
+    {
+      "Command": "store",
+      "Target": "fomo_positions.csv",
+      "Value": "CSV_FILE",
+      "Description": "Nama file catatan semua posisi yang discan"
+    },
+    {
+      "Command": "store",
+      "Target": "fomo_ad_log.csv",
+      "Value": "AD_LOG_FILE",
+      "Description": "Log AD: waktu, nama, umur(jam), rsi, mc sekarang, mc avg entry, invested, hasil (label)"
+    },
+    {
+      "Command": "store",
+      "Target": "fomo_sell_log.csv",
+      "Value": "SELL_LOG_FILE",
+      "Description": "Log sell (real & dry run): waktu, nama, nominal, margin, hasil (DRY_RUN_STOP / SOLD / MISMATCH)"
+    },
+    {
+      "Command": "store",
+      "Target": "(//button[@data-slot='hover-card-trigger'][.//div[contains(@class,'w-24')]])",
+      "Value": "ROW",
+      "Description": "XPath semua baris posisi (tanpa prefix xpath=)"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "done",
+      "Description": "Set 1 untuk berhenti manual"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "iter",
+      "Description": "Counter scan berturut-turut tanpa sell"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "total",
+      "Description": "Total siklus sejak macro mulai"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "1 = harus buka profil di siklus berikutnya"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "sinceOpen",
+      "Description": "Jumlah scan sejak terakhir buka profil"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "resumeK",
+      "Description": "Scan mulai dari coin ke-N. Naik setelah AD supaya lanjut ke coin berikutnya, reset ke 1 di akhir satu putaran"
+    },
+    {
+      "Command": "store",
+      "Target": "|",
+      "Value": "adDone",
+      "Description": "Coin yang sudah di-AD pada run ini (maksimal 1x per coin per run)"
+    },
+    {
+      "Command": "store",
+      "Target": "{}",
+      "Value": "failMap",
+      "Description": "Hitungan gagal-klik per coin (JSON), dipakai untuk auto-skip"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "pageFail",
+      "Description": "Jumlah kegagalan halaman berturut-turut"
+    },
+    {
+      "Command": "comment",
+      "Target": "=== LOOP UTAMA ===",
+      "Value": "",
+      "Description": "Siklus utama: buka profil, scroll, scan, keputusan, aksi, ulangi"
+    },
+    {
+      "Command": "while",
+      "Target": "${done} == 0 && (${MAX_LOOP} == 0 || ${iter} < ${MAX_LOOP})",
+      "Value": "",
+      "Description": "Loop utama: jalan selama belum dihentikan (done) dan belum melewati MAX_LOOP"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${total}) + 1;",
+      "Value": "total",
+      "Description": "Tambah 1 ke hitungan total siklus"
+    },
+    {
+      "Command": "echo",
+      "Target": "=== Siklus #${total} | tanpa sell berturut-turut: ${iter}/${MAX_LOOP} ===",
+      "Value": "blue",
+      "Description": "Penanda awal tiap siklus beserta hitungan tanpa sell"
+    },
+    {
+      "Command": "if",
+      "Target": "${sinceOpen} >= ${RELOAD_EVERY}",
+      "Value": "",
+      "Description": "Sudah waktunya reload profil berkala?"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "Tandai: profil harus dibuka ulang"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Sudah waktunya reload profil berkala?"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: gagal membuka/membaca profil tidak menghentikan macro, hasilnya dicek lewat status"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status; jadi false kalau ada langkah di blok ini yang gagal (misal halaman crash)"
+    },
+    {
+      "Command": "if",
+      "Target": "${needOpen} == 1",
+      "Value": "",
+      "Description": "Profil perlu dibuka ulang?"
+    },
+    {
+      "Command": "open",
+      "Target": "${PROFILE_URL}",
+      "Value": "",
+      "Description": "Buka profil hanya jika perlu"
+    },
+    {
+      "Command": "pause",
+      "Target": "5000",
+      "Value": "",
+      "Description": "Tunggu list open positions termuat. Pastikan tab Open aktif"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "needOpen",
+      "Description": "Hapus tanda: profil sudah dibuka"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "sinceOpen",
+      "Description": "Reset hitungan scan sejak profil dibuka"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Profil perlu dibuka ulang?)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Tidak pindah halaman, scan ulang di halaman yang sama",
+      "Value": "blue",
+      "Description": "Info: profil tidak dibuka ulang, scan di halaman yang sama"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${sinceOpen}) + 1;",
+      "Value": "sinceOpen",
+      "Description": "Tambah 1 hitungan scan sejak profil dibuka"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Profil perlu dibuka ulang?"
+    },
+    {
+      "Command": "comment",
+      "Target": "--- SCROLL: muat semua posisi (tanpa JS karena CSP fomo) ---",
+      "Value": "",
+      "Description": "Bagian scroll: memuat semua baris posisi (list bisa panjang)"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "lastCnt",
+      "Description": "Awal: belum ada jumlah baris pembanding"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "sc",
+      "Description": "Reset hitungan percobaan scroll"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "cnt",
+      "Description": "Reset jumlah baris ke 0; tetap 0 kalau pembacaan gagal"
+    },
+    {
+      "Command": "storeXpathCount",
+      "Target": "xpath=${ROW}",
+      "Value": "cnt",
+      "Description": "Hitung jumlah baris posisi di halaman"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "pageOk",
+      "Description": "1 = profil terbuka dan list terbaca tanpa error, 0 = halaman bermasalah"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status: error saat scroll tidak dianggap halaman bermasalah"
+    },
+    {
+      "Command": "if",
+      "Target": "${pageOk} == 1",
+      "Value": "",
+      "Description": "Halaman terbaca? (kalau tidak, lewati scroll)"
+    },
+    {
+      "Command": "while",
+      "Target": "${sc} < 8 && ${cnt} != ${lastCnt}",
+      "Value": "",
+      "Description": "Scroll berulang sampai jumlah baris tidak bertambah (maksimal 8 kali)"
+    },
+    {
+      "Command": "store",
+      "Target": "${cnt}",
+      "Value": "lastCnt",
+      "Description": "Simpan jumlah baris saat ini sebagai pembanding"
+    },
+    {
+      "Command": "if",
+      "Target": "${cnt} > 0",
+      "Value": "",
+      "Description": "Ada baris yang bisa difokuskan untuk scroll?"
+    },
+    {
+      "Command": "sendKeys",
+      "Target": "xpath=${ROW}[${cnt}]",
+      "Value": "${KEY_END}",
+      "Description": "Fokus ke baris terakhir lalu tekan End untuk scroll"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Ada baris yang bisa difokuskan untuk scroll?"
+    },
+    {
+      "Command": "pause",
+      "Target": "1500",
+      "Value": "",
+      "Description": "Tunggu baris baru termuat"
+    },
+    {
+      "Command": "storeXpathCount",
+      "Target": "xpath=${ROW}",
+      "Value": "cnt",
+      "Description": "Hitung ulang jumlah baris setelah scroll"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${sc}) + 1;",
+      "Value": "sc",
+      "Description": "Tambah 1 percobaan scroll"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Scroll berulang sampai jumlah baris tidak bertambah (maksimal 8 kali)"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Halaman terbaca? (kalau tidak, lewati scroll)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${cnt});",
+      "Value": "n",
+      "Description": "Paksa jadi angka"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "echo",
+      "Target": "${n} posisi terbaca",
+      "Value": "blue",
+      "Description": "Info jumlah posisi yang terbaca di halaman"
+    },
+    {
+      "Command": "if",
+      "Target": "${pageOk} == 1",
+      "Value": "",
+      "Description": "Halaman sehat? (kalau tidak, lompat ke pemulihan di akhir siklus)"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "pageFail",
+      "Description": "Halaman sehat: reset hitungan kegagalan halaman berturut-turut"
+    },
+    {
+      "Command": "if",
+      "Target": "${n} == 0",
+      "Value": "",
+      "Description": "Tidak ada posisi terbaca? (bisa jadi list belum termuat)"
+    },
+    {
+      "Command": "echo",
+      "Target": "0 posisi terbaca, profil dimuat ulang di siklus berikutnya untuk memastikan",
+      "Value": "orange",
+      "Description": "Info: kemungkinan list belum termuat"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "Paksa buka ulang profil di siklus berikutnya"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Tidak ada posisi terbaca? (bisa jadi list belum termuat)"
+    },
+    {
+      "Command": "comment",
+      "Target": "--- SCAN: tiap coin langsung dicek & diproses ---",
+      "Value": "",
+      "Description": "Bagian scan: setiap coin dibaca dan langsung diproses"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${resumeK});",
+      "Value": "k",
+      "Description": "Paksa jadi angka"
+    },
+    {
+      "Command": "echo",
+      "Target": "Scan mulai dari coin ke-${resumeK}",
+      "Value": "blue",
+      "Description": "Info nomor coin tempat scan dimulai"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "acted",
+      "Description": "1 = sudah ada aksi (popup dibuka), scan dihentikan"
+    },
+    {
+      "Command": "while",
+      "Target": "${k} <= ${n}",
+      "Value": "",
+      "Description": "Loop per coin: dari nomor awal sampai coin terakhir"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "pName",
+      "Description": "Reset nama coin (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: gagal baca nama tidak menghentikan macro"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum membaca nama coin"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=${ROW}[${k}]//div[contains(@class,'text-sm') and contains(@class,'truncate')]",
+      "Value": "pName",
+      "Description": "Baca nama coin pada baris ke-k"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "nameOk",
+      "Description": "1 = nama coin terbaca, 0 = gagal baca"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var l=String(${EXCLUDE}).split('|').map(function(x){return x.trim().toLowerCase();}).filter(function(x){return x.length>0;}); return (l.indexOf(String(${pName}).trim().toLowerCase())>=0) ? 1 : 0;",
+      "Value": "isExcluded",
+      "Description": "1 = coin ada di daftar EXCLUDE"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${failMap});}catch(e){} var key=String(${pName}).trim().toLowerCase(); return ((m[key]||0) >= Number(${CLICK_FAIL_MAX})) ? 1 : 0;",
+      "Value": "isBad",
+      "Description": "1 = coin sudah gagal diklik >= CLICK_FAIL_MAX kali (di-skip otomatis)"
+    },
+    {
+      "Command": "if",
+      "Target": "${nameOk} == 0",
+      "Value": "",
+      "Description": "Nama coin gagal dibaca?"
+    },
+    {
+      "Command": "echo",
+      "Target": "Gagal membaca nama coin ke-${k}: halaman bermasalah? Profil dimuat ulang, scan lanjut ke coin berikutnya",
+      "Value": "red",
+      "Description": "Info: pembacaan coin gagal"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "Paksa buka ulang profil di siklus berikutnya"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "acted",
+      "Description": "Tandai sudah ada aksi supaya resumeK tidak di-reset"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${n}) + 1;",
+      "Value": "k",
+      "Description": "Keluar dari loop scan"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: nama coin terbaca"
+    },
+    {
+      "Command": "if",
+      "Target": "${isExcluded} == 1 || ${isBad} == 1",
+      "Value": "",
+      "Description": "Coin ada di EXCLUDE atau sudah sering gagal diklik? (kalau ya, dilewati)"
+    },
+    {
+      "Command": "echo",
+      "Target": "SKIP: ${pName} (ada di EXCLUDE atau gagal diklik >= ${CLICK_FAIL_MAX} kali)",
+      "Value": "blue",
+      "Description": "Info coin dilewati karena EXCLUDE atau sering gagal diklik"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Coin ada di daftar EXCLUDE? (kalau ya, dilewati))"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "colText",
+      "Description": "Reset teks kolom kanan (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: gagal baca margin tidak menghentikan macro"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum membaca kolom kanan"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=${ROW}[${k}]//div[contains(@class,'w-24')]",
+      "Value": "colText",
+      "Description": "Teks kolom kanan: nominal + panah + persen"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "colOk",
+      "Description": "1 = nilai dan margin terbaca, 0 = gagal baca"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "if",
+      "Target": "${colOk} == 0",
+      "Value": "",
+      "Description": "Margin coin gagal dibaca?"
+    },
+    {
+      "Command": "echo",
+      "Target": "Gagal membaca margin coin ke-${k}: halaman bermasalah? Profil dimuat ulang, scan lanjut ke coin berikutnya",
+      "Value": "red",
+      "Description": "Info: pembacaan coin gagal"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "Paksa buka ulang profil di siklus berikutnya"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "acted",
+      "Description": "Tandai sudah ada aksi supaya resumeK tidak di-reset"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${n}) + 1;",
+      "Value": "k",
+      "Description": "Keluar dari loop scan"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: nilai dan margin terbaca"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var t=${colText}; var v=t.match(/\\$\\s*([\\d,.]+)\\s*([KMB]?)/); if(!v){return -1;} var m={K:1e3,M:1e6,B:1e9}[v[2]]||1; return parseFloat(v[1].replace(/,/g,''))*m;",
+      "Value": "pNominal",
+      "Description": "Hitung nilai posisi (USD) dari teks kolom kanan; K/M/B dikonversi ke angka penuh"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var t=${colText}; var m=t.match(/([\\u25B2\\u25BC])\\s*([\\d,.]+)\\s*%/); if(!m){return 0;} var p=parseFloat(m[2].replace(/,/g,'')); return (m[1]==='\\u25BC')?-p:p;",
+      "Value": "pPct",
+      "Description": "Panah bawah = negatif"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var nm=String(${pName}).trim().toLowerCase(); var l=String(${TP_CUSTOM}).split('|'); for(var i=0;i<l.length;i++){var p=l[i].lastIndexOf(':'); if(p<0){continue;} var key=l[i].slice(0,p).trim().toLowerCase(); var v=parseFloat(l[i].slice(p+1)); if(key===nm && !isNaN(v)){return v;}} return Number(${TP});",
+      "Value": "tpCoin",
+      "Description": "TP yang berlaku untuk coin ini: dari TP_CUSTOM kalau ada, kalau tidak TP default"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var d=new Date();var p=function(n){return ('0'+n).slice(-2)};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());",
+      "Value": "ts",
+      "Description": "Ambil waktu sekarang (tahun-bulan-tanggal jam:menit:detik)"
+    },
+    {
+      "Command": "echo",
+      "Target": "${ts} | ${pName} | $${pNominal} | ${pPct}% | TP ${tpCoin}%",
+      "Value": "green",
+      "Description": "Tampilkan hasil baca satu coin beserta TP yang berlaku"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_positions.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_positions.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${pNominal}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_positions.csv: nominal posisi (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${pPct}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_positions.csv: margin (%)"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${CSV_FILE}",
+      "Value": "",
+      "Description": "Append: waktu, nama, nominal, margin"
+    },
+    {
+      "Command": "comment",
+      "Target": "--- KEPUTUSAN SELL ---",
+      "Value": "",
+      "Description": "Bagian keputusan sell"
+    },
+    {
+      "Command": "if",
+      "Target": "${pPct} >= ${tpCoin}",
+      "Value": "",
+      "Description": "Margin mencapai TP coin ini? (kalau ya, proses sell)"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "acted",
+      "Description": "Tandai: coin ini sudah diproses, scan dihentikan setelah selesai"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "Popup dibuka -> siklus berikutnya wajib kembali ke profil"
+    },
+    {
+      "Command": "echo",
+      "Target": "SELL: ${pName} (${pPct}% >= TP ${tpCoin}%)",
+      "Value": "green",
+      "Description": "Info coin yang akan dijual dan TP yang dipakai"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "clickOk",
+      "Description": "1 = klik icon coin berhasil"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "ct",
+      "Description": "Hitungan percobaan klik icon coin"
+    },
+    {
+      "Command": "store",
+      "Target": "5",
+      "Value": "!timeout_wait",
+      "Description": "Timeout pendek (detik) supaya coin yang tidak bisa diklik tidak membuat macro menunggu lama"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: gagal klik tidak menghentikan macro"
+    },
+    {
+      "Command": "while",
+      "Target": "${clickOk} == 0 && ${ct} < ${CLICK_TRIES}",
+      "Value": "",
+      "Description": "Coba klik icon coin maksimal CLICK_TRIES kali"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum mencoba klik"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=${ROW}[${k}]//img",
+      "Value": "",
+      "Description": "Klik icon coin (dicoba ulang kalau gagal)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "tryOk",
+      "Description": "1 = klik barusan berhasil, 0 = gagal"
+    },
+    {
+      "Command": "if",
+      "Target": "${tryOk} == 1",
+      "Value": "",
+      "Description": "Klik berhasil?"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "clickOk",
+      "Description": "Tandai klik berhasil, berhenti mencoba"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Klik gagal (sell)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Klik icon ${pName} gagal, coba lagi...",
+      "Value": "orange",
+      "Description": "Info: percobaan klik gagal"
+    },
+    {
+      "Command": "pause",
+      "Target": "1500",
+      "Value": "",
+      "Description": "Jeda sebelum mencoba klik lagi (logo coin mungkin belum selesai dimuat)"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Klik berhasil?"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${ct}) + 1;",
+      "Value": "ct",
+      "Description": "Tambah 1 percobaan klik"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coba klik icon coin maksimal CLICK_TRIES kali"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "store",
+      "Target": "10",
+      "Value": "!timeout_wait",
+      "Description": "Kembalikan timeout default"
+    },
+    {
+      "Command": "if",
+      "Target": "${clickOk} == 0",
+      "Value": "",
+      "Description": "Coin tidak bisa diklik setelah semua percobaan?"
+    },
+    {
+      "Command": "echo",
+      "Target": "COIN TIDAK BISA DIKLIK: ${pName} (sudah dicoba ${CLICK_TRIES}x). Dilewati, scan lanjut ke coin berikutnya",
+      "Value": "red",
+      "Description": "Info: coin gagal diklik, dilewati"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${failMap});}catch(e){} var key=String(${pName}).trim().toLowerCase(); m[key]=(m[key]||0)+1; return JSON.stringify(m);",
+      "Value": "failMap",
+      "Description": "Tambah 1 hitungan gagal-klik untuk coin ini (auto-skip kalau >= CLICK_FAIL_MAX)"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_sell_log.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_sell_log.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${pNominal}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_sell_log.csv: nominal posisi (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${pPct}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_sell_log.csv: margin (%)"
+    },
+    {
+      "Command": "store",
+      "Target": "CLICK_GAGAL",
+      "Value": "!csvLine",
+      "Description": "Kolom 5 fomo_sell_log.csv: hasil"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${SELL_LOG_FILE}",
+      "Value": "",
+      "Description": "Log sell: waktu, nama, nominal, margin, hasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: klik icon coin berhasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${failMap});}catch(e){} var key=String(${pName}).trim().toLowerCase(); m[key]=0; return JSON.stringify(m);",
+      "Value": "failMap",
+      "Description": "Klik berhasil: reset hitungan gagal-klik coin ini"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "finalText",
+      "Description": "Reset teks tombol konfirmasi (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: langkah di popup sell dicek lewat status; konfirmasi hanya diklik kalau semuanya sukses"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum langkah di popup sell"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return 1;",
+      "Value": "flowOk",
+      "Description": "Mulai akumulasi status langkah di popup sell"
+    },
+    {
+      "Command": "pause",
+      "Target": "3000",
+      "Value": "",
+      "Description": "Tunggu popup coin muncul"
+    },
+    {
+      "Command": "waitForElementPresent",
+      "Target": "xpath=//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
+      "Value": "",
+      "Description": "Pastikan tombol Sell di popup sudah ada"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=//button[normalize-space(text())='Sell' and contains(@class,'bg-red-transparent')]",
+      "Value": "",
+      "Description": "Klik tombol Sell di popup"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "pause",
+      "Target": "500",
+      "Value": "",
+      "Description": "Jeda singkat setelah klik Sell"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=//button[normalize-space(text())='100%']",
+      "Value": "",
+      "Description": "Klik tombol 100%"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "pause",
+      "Target": "500",
+      "Value": "",
+      "Description": "Jeda singkat setelah klik 100%"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Sell ')]",
+      "Value": "finalText",
+      "Description": "Teks tombol konfirmasi, contoh: Sell E/ACC"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && ${finalText} === 'Sell ' + ${pName}) ? 1 : 0;",
+      "Value": "ok",
+      "Description": "1 = semua langkah di popup sukses DAN tombol konfirmasi sesuai coin yang dicek"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "if",
+      "Target": "${ok} == 1",
+      "Value": "",
+      "Description": "Tombol konfirmasi sesuai coin yang dicek?"
+    },
+    {
+      "Command": "if",
+      "Target": "${DRY_RUN_SELL} == 1",
+      "Value": "",
+      "Description": "Dry run sell aktif?"
+    },
+    {
+      "Command": "echo",
+      "Target": "DRY RUN: berhenti sebelum klik '${finalText}'",
+      "Value": "orange",
+      "Description": "Info dry run sell: konfirmasi tidak diklik"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_sell_log.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_sell_log.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${pNominal}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_sell_log.csv: nominal posisi (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${pPct}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_sell_log.csv: margin (%)"
+    },
+    {
+      "Command": "store",
+      "Target": "DRY_RUN_STOP",
+      "Value": "!csvLine",
+      "Description": "Kolom 5 fomo_sell_log.csv: hasil"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${SELL_LOG_FILE}",
+      "Value": "",
+      "Description": "Log sell: waktu, nama, nominal, margin, hasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Dry run: coin masih ada di list, lanjut ke coin berikutnya setelah balik ke profil"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Dry run sell aktif?)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: pastikan klik konfirmasi sell benar-benar berhasil"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum klik konfirmasi"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Sell ')]",
+      "Value": "",
+      "Description": "Klik tombol konfirmasi Sell (transaksi sungguhan)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "sellClicked",
+      "Description": "1 = klik konfirmasi sell berhasil, 0 = gagal"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "pause",
+      "Target": "2000",
+      "Value": "",
+      "Description": "Tunggu sebentar setelah sell, tanpa konfirmasi"
+    },
+    {
+      "Command": "if",
+      "Target": "${sellClicked} == 1",
+      "Value": "",
+      "Description": "Klik konfirmasi sell berhasil?"
+    },
+    {
+      "Command": "echo",
+      "Target": "SOLD: ${pName} (${pPct}%) -> counter loop di-reset ke 0, scan ulang",
+      "Value": "green",
+      "Description": "Info sell sungguhan sudah dikirim"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_sell_log.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_sell_log.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${pNominal}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_sell_log.csv: nominal posisi (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${pPct}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_sell_log.csv: margin (%)"
+    },
+    {
+      "Command": "store",
+      "Target": "SOLD",
+      "Value": "!csvLine",
+      "Description": "Kolom 5 fomo_sell_log.csv: hasil"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${SELL_LOG_FILE}",
+      "Value": "",
+      "Description": "Log sell: waktu, nama, nominal, margin, hasil"
+    },
+    {
+      "Command": "store",
+      "Target": "${k}",
+      "Value": "resumeK",
+      "Description": "Coin terjual hilang dari list, jadi coin berikutnya sekarang menempati nomor yang sama"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: klik konfirmasi sell gagal"
+    },
+    {
+      "Command": "echo",
+      "Target": "SELL GAGAL: ${pName} (tombol konfirmasi tidak bisa diklik). Dicatat SELL_GAGAL, scan lanjut",
+      "Value": "red",
+      "Description": "Info: konfirmasi sell gagal diklik"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_sell_log.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_sell_log.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${pNominal}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_sell_log.csv: nominal posisi (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${pPct}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_sell_log.csv: margin (%)"
+    },
+    {
+      "Command": "store",
+      "Target": "SELL_GAGAL",
+      "Value": "!csvLine",
+      "Description": "Kolom 5 fomo_sell_log.csv: hasil"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${SELL_LOG_FILE}",
+      "Value": "",
+      "Description": "Log sell: waktu, nama, nominal, margin, hasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Lanjut ke coin berikutnya setelah profil dimuat ulang"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Klik konfirmasi sell berhasil?"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Dry run sell aktif?"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Tombol konfirmasi sesuai coin yang dicek?)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Coin di popup tidak cocok (${finalText}), dilewati, scan ulang",
+      "Value": "red",
+      "Description": "Info popup tidak cocok, sell dibatalkan"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_sell_log.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_sell_log.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${pNominal}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_sell_log.csv: nominal posisi (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${pPct}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_sell_log.csv: margin (%)"
+    },
+    {
+      "Command": "store",
+      "Target": "MISMATCH",
+      "Value": "!csvLine",
+      "Description": "Kolom 5 fomo_sell_log.csv: hasil"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${SELL_LOG_FILE}",
+      "Value": "",
+      "Description": "Log sell: waktu, nama, nominal, margin, hasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Lanjut ke coin berikutnya setelah balik ke profil"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Tombol konfirmasi sesuai coin yang dicek?"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coin tidak bisa diklik setelah semua percobaan?"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${n}) + 1;",
+      "Value": "k",
+      "Description": "Keluar dari loop scan, coin lain discan ulang di siklus berikutnya"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Margin mencapai TP coin ini? (kalau ya, proses sell)"
+    },
+    {
+      "Command": "comment",
+      "Target": "--- KEPUTUSAN AD (average down) ---",
+      "Value": "",
+      "Description": "Bagian keputusan average down (AD)"
+    },
+    {
+      "Command": "if",
+      "Target": "${acted} == 0 && ${pPct} <= ${AD_TRIGGER}",
+      "Value": "",
+      "Description": "Belum ada aksi dan margin <= AD_TRIGGER? (kandidat AD)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (${adDone}.indexOf('|'+${pName}+'|')<0) ? 1 : 0;",
+      "Value": "adGate",
+      "Description": "1 = coin belum pernah di-AD pada run ini"
+    },
+    {
+      "Command": "if",
+      "Target": "${adGate} == 1",
+      "Value": "",
+      "Description": "Coin belum pernah di-AD pada run ini?"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "acted",
+      "Description": "Tandai: coin ini sudah diproses, scan dihentikan setelah selesai"
+    },
+    {
+      "Command": "echo",
+      "Target": "KANDIDAT AD: ${pName} (${pPct}%) -> cek detail coin",
+      "Value": "orange",
+      "Description": "Info coin jadi kandidat AD"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "ageH",
+      "Description": "Reset umur coin ke -1 (belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "mcNow",
+      "Description": "Reset market cap sekarang ke -1 (belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "avgMC",
+      "Description": "Reset market cap avg entry ke -1 (belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "invested",
+      "Description": "Reset nominal invested ke -1 (belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "rsi",
+      "Description": "Reset RSI ke -1 (belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "POPUP_MISMATCH",
+      "Value": "adResult",
+      "Description": "Default: kalau popup tidak cocok, detail tidak sempat dibaca"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "buyText",
+      "Description": "Reset teks tombol Buy (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "clickOk",
+      "Description": "1 = klik icon coin berhasil"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "ct",
+      "Description": "Hitungan percobaan klik icon coin"
+    },
+    {
+      "Command": "store",
+      "Target": "5",
+      "Value": "!timeout_wait",
+      "Description": "Timeout pendek (detik) supaya coin yang tidak bisa diklik tidak membuat macro menunggu lama"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: gagal klik tidak menghentikan macro"
+    },
+    {
+      "Command": "while",
+      "Target": "${clickOk} == 0 && ${ct} < ${CLICK_TRIES}",
+      "Value": "",
+      "Description": "Coba klik icon coin maksimal CLICK_TRIES kali"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum mencoba klik"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=${ROW}[${k}]//img",
+      "Value": "",
+      "Description": "Klik icon coin (dicoba ulang kalau gagal)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "tryOk",
+      "Description": "1 = klik barusan berhasil, 0 = gagal"
+    },
+    {
+      "Command": "if",
+      "Target": "${tryOk} == 1",
+      "Value": "",
+      "Description": "Klik berhasil?"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "clickOk",
+      "Description": "Tandai klik berhasil, berhenti mencoba"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Klik gagal (AD)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Klik icon ${pName} gagal, coba lagi...",
+      "Value": "orange",
+      "Description": "Info: percobaan klik gagal"
+    },
+    {
+      "Command": "pause",
+      "Target": "1500",
+      "Value": "",
+      "Description": "Jeda sebelum mencoba klik lagi (logo coin mungkin belum selesai dimuat)"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Klik berhasil?"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${ct}) + 1;",
+      "Value": "ct",
+      "Description": "Tambah 1 percobaan klik"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coba klik icon coin maksimal CLICK_TRIES kali"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "store",
+      "Target": "10",
+      "Value": "!timeout_wait",
+      "Description": "Kembalikan timeout default"
+    },
+    {
+      "Command": "if",
+      "Target": "${clickOk} == 0",
+      "Value": "",
+      "Description": "Coin tidak bisa diklik setelah semua percobaan?"
+    },
+    {
+      "Command": "echo",
+      "Target": "COIN TIDAK BISA DIKLIK: ${pName} (sudah dicoba ${CLICK_TRIES}x). AD dibatalkan, scan lanjut ke coin berikutnya",
+      "Value": "red",
+      "Description": "Info: coin gagal diklik, AD dibatalkan"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${failMap});}catch(e){} var key=String(${pName}).trim().toLowerCase(); m[key]=(m[key]||0)+1; return JSON.stringify(m);",
+      "Value": "failMap",
+      "Description": "Tambah 1 hitungan gagal-klik untuk coin ini (auto-skip kalau >= CLICK_FAIL_MAX)"
+    },
+    {
+      "Command": "store",
+      "Target": "CLICK_GAGAL",
+      "Value": "adResult",
+      "Description": "Catat hasil AD: CLICK_GAGAL"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: klik icon coin berhasil"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var m={}; try{m=JSON.parse(${failMap});}catch(e){} var key=String(${pName}).trim().toLowerCase(); m[key]=0; return JSON.stringify(m);",
+      "Value": "failMap",
+      "Description": "Klik berhasil: reset hitungan gagal-klik coin ini"
+    },
+    {
+      "Command": "pause",
+      "Target": "3000",
+      "Value": "",
+      "Description": "Tunggu popup coin muncul"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "popName",
+      "Description": "Reset nama coin di popup (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Abaikan error di langkah berikut (pembacaan opsional)"
+    },
+    {
+      "Command": "waitForElementPresent",
+      "Target": "xpath=//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')]//div[contains(@class,'text-lg')]",
+      "Value": "",
+      "Description": "Tunggu nama coin di popup muncul"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')]//div[contains(@class,'text-lg')]",
+      "Value": "popName",
+      "Description": "Baca nama coin di popup"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Kembali ke mode normal: error menghentikan macro"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (${popName} == ${pName}) ? 1 : 0;",
+      "Value": "popOk",
+      "Description": "Verifikasi nama coin di popup"
+    },
+    {
+      "Command": "if",
+      "Target": "${popOk} == 1",
+      "Value": "",
+      "Description": "Nama coin di popup cocok?"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: gagal buka halaman detail tidak menghentikan macro (nilai tetap -1, AD dibatalkan)"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=//a[@data-slot='hover-card-trigger' and contains(@href,'/tokens/')][.//div[contains(@class,'text-lg')]]//img",
+      "Value": "",
+      "Description": "Klik icon coin lagi -> halaman detail coin"
+    },
+    {
+      "Command": "pause",
+      "Target": "4000",
+      "Value": "",
+      "Description": "Tunggu halaman detail dan chart termuat"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "ageText",
+      "Description": "Reset teks umur coin (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "mcText",
+      "Description": "Reset teks market cap sekarang (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "investedText",
+      "Description": "Reset teks nominal invested (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "avgText",
+      "Description": "Reset teks market cap avg entry (x = belum terbaca)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Pembacaan detail: kalau elemen tidak ketemu, nilai jadi -1 dan AD dibatalkan"
+    },
+    {
+      "Command": "waitForElementPresent",
+      "Target": "xpath=//div[normalize-space(text())='Market cap']/following-sibling::div[1]",
+      "Value": "",
+      "Description": "Tunggu halaman detail (market cap) termuat"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=(//span[@title and @translate='no' and contains(@class,'text-xs') and contains(@class,'text-text-secondary') and contains(@class,'shrink-0')])[1]",
+      "Value": "ageText",
+      "Description": "Baca umur coin dari halaman detail"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//div[normalize-space(text())='Market cap']/following-sibling::div[1]",
+      "Value": "mcText",
+      "Description": "Baca market cap sekarang dari halaman detail"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//div[normalize-space(text())='Invested']/following-sibling::div[1]",
+      "Value": "investedText",
+      "Description": "Baca nominal Invested dari halaman detail"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//div[normalize-space(text())='Avg entry']/following-sibling::div[1]",
+      "Value": "avgText",
+      "Description": "Baca market cap Avg entry dari halaman detail"
+    },
+    {
+      "Command": "store",
+      "Target": "-1",
+      "Value": "rsi",
+      "Description": "Default: RSI tidak dipakai/tidak terbaca"
+    },
+    {
+      "Command": "if",
+      "Target": "${AD_USE_RSI} == 1",
+      "Value": "",
+      "Description": "RSI dipakai sebagai syarat AD?"
+    },
+    {
+      "Command": "store",
+      "Target": "4",
+      "Value": "!timeout_wait",
+      "Description": "Timeout pendek khusus pembacaan RSI"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "tries",
+      "Description": "Reset hitungan percobaan baca RSI"
+    },
+    {
+      "Command": "while",
+      "Target": "${rsi} < 0 && ${tries} < 3",
+      "Value": "",
+      "Description": "Coba baca RSI maksimal 3 kali sampai berhasil"
+    },
+    {
+      "Command": "store",
+      "Target": "x",
+      "Value": "rsiText",
+      "Description": "Reset teks RSI (x = belum terbaca)"
+    },
+    {
+      "Command": "selectFrame",
+      "Target": "xpath=//iframe[starts-with(@id,'tradingview')]",
+      "Value": "",
+      "Description": "Masuk ke iframe chart TradingView (id berubah-ubah, jadi dicari lewat awalan)"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//div[@data-qa-id='legend-source-item'][contains(.,'RSI')]//div[@data-test-id-value-title='Plot']//div[contains(@class,'valueValue')]",
+      "Value": "rsiText",
+      "Description": "Baca nilai RSI dari legend chart"
+    },
+    {
+      "Command": "selectFrame",
+      "Target": "relative=top",
+      "Value": "",
+      "Description": "Wajib keluar frame lagi"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var n=parseFloat(${rsiText}); return isNaN(n)?-1:n;",
+      "Value": "rsi",
+      "Description": "Ubah teks RSI menjadi angka (-1 kalau gagal)"
+    },
+    {
+      "Command": "if",
+      "Target": "${rsi} < 0",
+      "Value": "",
+      "Description": "RSI belum terbaca?"
+    },
+    {
+      "Command": "pause",
+      "Target": "1000",
+      "Value": "",
+      "Description": "RSI belum termuat, coba lagi"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: RSI belum terbaca?"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${tries}) + 1;",
+      "Value": "tries",
+      "Description": "Tambah 1 percobaan baca RSI"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coba baca RSI maksimal 3 kali sampai berhasil"
+    },
+    {
+      "Command": "store",
+      "Target": "10",
+      "Value": "!timeout_wait",
+      "Description": "Kembalikan timeout default"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: RSI dipakai sebagai syarat AD?"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Kembali ke mode normal: error menghentikan macro"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var t=String(${ageText}); var re=/(\\d+(?:\\.\\d+)?)\\s*(mo|min|[smhdwy])/gi; var tot=0, f=0, m; while((m=re.exec(t))!==null){var n=parseFloat(m[1]); var u=m[2].toLowerCase(); var mult={s:1/3600,m:1/60,min:1/60,h:1,d:24,w:168,mo:720,y:8760}[u]; if(mult===undefined){continue;} tot+=n*mult; f=1;} return f?tot:-1;",
+      "Value": "ageH",
+      "Description": "Umur dalam jam (4d = 96)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var t=String(${mcText}); var v=t.match(/\\$?\\s*([\\d,.]+)\\s*([KMB]?)/); if(!v){return -1;} var m={K:1e3,M:1e6,B:1e9}[v[2]]||1; return parseFloat(v[1].replace(/,/g,''))*m;",
+      "Value": "mcNow",
+      "Description": "Market cap sekarang"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var t=String(${avgText}); var v=t.match(/\\$?\\s*([\\d,.]+)\\s*([KMB]?)/); if(!v){return -1;} var m={K:1e3,M:1e6,B:1e9}[v[2]]||1; return parseFloat(v[1].replace(/,/g,''))*m;",
+      "Value": "avgMC",
+      "Description": "Market cap saat average entry"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var t=String(${investedText}); var v=t.match(/\\$?\\s*([\\d,.]+)\\s*([KMB]?)/); if(!v){return -1;} var m={K:1e3,M:1e6,B:1e9}[v[2]]||1; return parseFloat(v[1].replace(/,/g,''))*m;",
+      "Value": "invested",
+      "Description": "Nominal invested = jumlah AD (1:1)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "var r=[]; if(!(${ageH} >= ${AD_MIN_AGE_H})) r.push('UMUR'); if(${AD_USE_RSI} == 1 && !(${rsi} >= 0 && ${rsi} <= ${AD_RSI_MAX})) r.push('RSI'); if(!(${mcNow} > 0 && ${avgMC} > 0 && ${mcNow} < ${avgMC})) r.push('MC'); if(!(${invested} > 0)) r.push('INVESTED'); return r.length ? 'TIDAK_LOLOS:' + r.join('+') : 'LOLOS';",
+      "Value": "adHasil",
+      "Description": "LOLOS atau TIDAK_LOLOS:<syarat yang gagal> (UMUR, RSI, MC, INVESTED)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (${adHasil} === 'LOLOS') ? 1 : 0;",
+      "Value": "adPass",
+      "Description": "1 kalau hasil pengecekan AD = LOLOS, selain itu 0"
+    },
+    {
+      "Command": "echo",
+      "Target": "AD CEK ${pName}: umur=${ageH}h (min ${AD_MIN_AGE_H}) | RSI=${rsi} (maks ${AD_RSI_MAX}) | MC=${mcNow} vs avg=${avgMC} | invested=${invested} | hasil=${adHasil}",
+      "Value": "orange",
+      "Description": "Ringkasan pengecekan syarat AD"
+    },
+    {
+      "Command": "store",
+      "Target": "${adHasil}",
+      "Value": "adResult",
+      "Description": "Hasil akhir yang dicatat di AD log (bisa ditimpa di cabang berikutnya)"
+    },
+    {
+      "Command": "if",
+      "Target": "${adPass} == 1",
+      "Value": "",
+      "Description": "Semua syarat AD terpenuhi?"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: pastikan pengisian nominal dan pembacaan tombol Buy sukses"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum mengisi nominal"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return 1;",
+      "Value": "flowOk",
+      "Description": "Mulai akumulasi status langkah pengisian nominal"
+    },
+    {
+      "Command": "type",
+      "Target": "xpath=(//input[@placeholder='0' and contains(@class,'flex-1')])[1]",
+      "Value": "${invested}",
+      "Description": "Isi nominal buy = invested (1:1)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "pause",
+      "Target": "1000",
+      "Value": "",
+      "Description": "Jeda setelah mengisi nominal agar tombol Buy ter-update"
+    },
+    {
+      "Command": "storeText",
+      "Target": "xpath=//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Buy ')]",
+      "Value": "buyText",
+      "Description": "Teks tombol buy, contoh: Buy 1"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && String(${!statusOK}) === 'true') ? 1 : 0;",
+      "Value": "flowOk",
+      "Description": "Akumulasi: tetap 1 hanya kalau semua langkah sampai di sini sukses (tidak bergantung pada status yang 'menempel')"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return (Number(${flowOk}) === 1 && ${buyText} === 'Buy ' + ${pName}) ? 1 : 0;",
+      "Value": "buyOk",
+      "Description": "1 = semua langkah sukses DAN tombol Buy sesuai coin yang dicek"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "if",
+      "Target": "${buyOk} == 1",
+      "Value": "",
+      "Description": "Tombol Buy sesuai coin yang dicek?"
+    },
+    {
+      "Command": "if",
+      "Target": "${DRY_RUN_AD} == 1",
+      "Value": "",
+      "Description": "Dry run AD aktif?"
+    },
+    {
+      "Command": "echo",
+      "Target": "DRY RUN: berhenti sebelum klik '${buyText}' (nominal ${invested})",
+      "Value": "orange",
+      "Description": "Info dry run AD: tombol Buy tidak diklik"
+    },
+    {
+      "Command": "store",
+      "Target": "DRY_RUN_STOP",
+      "Value": "adResult",
+      "Description": "Catat hasil AD: DRY_RUN_STOP"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Dry run AD aktif?)"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: pastikan klik Buy benar-benar berhasil"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!statusOK",
+      "Description": "Reset status sebelum klik Buy"
+    },
+    {
+      "Command": "click",
+      "Target": "xpath=//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Buy ')]",
+      "Value": "",
+      "Description": "Klik tombol Buy (transaksi sungguhan)"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return String(${!statusOK}) === 'true' ? 1 : 0;",
+      "Value": "buyClicked",
+      "Description": "1 = klik Buy berhasil, 0 = gagal"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "pause",
+      "Target": "2000",
+      "Value": "",
+      "Description": "Tunggu sebentar setelah buy"
+    },
+    {
+      "Command": "if",
+      "Target": "${buyClicked} == 1",
+      "Value": "",
+      "Description": "Klik Buy berhasil?"
+    },
+    {
+      "Command": "echo",
+      "Target": "AD BUY: ${pName} senilai $${invested}",
+      "Value": "green",
+      "Description": "Info buy AD sungguhan sudah dikirim"
+    },
+    {
+      "Command": "store",
+      "Target": "BOUGHT",
+      "Value": "adResult",
+      "Description": "Catat hasil AD: BOUGHT"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return ${adDone} + ${pName} + '|';",
+      "Value": "adDone",
+      "Description": "Tambahkan coin ke daftar yang sudah di-AD (maksimal 1x per coin per run)"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: klik Buy gagal"
+    },
+    {
+      "Command": "echo",
+      "Target": "BUY GAGAL: ${pName} (tombol Buy tidak bisa diklik). Dicatat BUY_GAGAL",
+      "Value": "red",
+      "Description": "Info: klik Buy gagal"
+    },
+    {
+      "Command": "store",
+      "Target": "BUY_GAGAL",
+      "Value": "adResult",
+      "Description": "Catat hasil AD: BUY_GAGAL"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Klik Buy berhasil?"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Dry run AD aktif?"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Tombol Buy sesuai coin yang dicek?)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Tombol buy tidak cocok (${buyText}), AD dibatalkan",
+      "Value": "red",
+      "Description": "Info tombol Buy tidak cocok, AD dibatalkan"
+    },
+    {
+      "Command": "store",
+      "Target": "BUY_MISMATCH",
+      "Value": "adResult",
+      "Description": "Catat hasil AD: BUY_MISMATCH"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Tombol Buy sesuai coin yang dicek?"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Semua syarat AD terpenuhi?)"
+    },
+    {
+      "Command": "echo",
+      "Target": "AD ${pName} belum memenuhi syarat, dicek lagi di putaran berikutnya",
+      "Value": "orange",
+      "Description": "Info syarat AD belum terpenuhi"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Semua syarat AD terpenuhi?"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Nama coin di popup cocok?)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Popup coin tidak cocok (${popName}), AD dibatalkan",
+      "Value": "red",
+      "Description": "Info popup tidak cocok, AD dibatalkan"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Nama coin di popup cocok?"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coin tidak bisa diklik setelah semua percobaan?"
+    },
+    {
+      "Command": "store",
+      "Target": "${ts}",
+      "Value": "!csvLine",
+      "Description": "Kolom 1 fomo_ad_log.csv: waktu"
+    },
+    {
+      "Command": "store",
+      "Target": "${pName}",
+      "Value": "!csvLine",
+      "Description": "Kolom 2 fomo_ad_log.csv: nama coin"
+    },
+    {
+      "Command": "store",
+      "Target": "${ageH}",
+      "Value": "!csvLine",
+      "Description": "Kolom 3 fomo_ad_log.csv: umur (jam)"
+    },
+    {
+      "Command": "store",
+      "Target": "${rsi}",
+      "Value": "!csvLine",
+      "Description": "Kolom 4 fomo_ad_log.csv: RSI"
+    },
+    {
+      "Command": "store",
+      "Target": "${mcNow}",
+      "Value": "!csvLine",
+      "Description": "Kolom 5 fomo_ad_log.csv: market cap sekarang"
+    },
+    {
+      "Command": "store",
+      "Target": "${avgMC}",
+      "Value": "!csvLine",
+      "Description": "Kolom 6 fomo_ad_log.csv: market cap avg entry"
+    },
+    {
+      "Command": "store",
+      "Target": "${invested}",
+      "Value": "!csvLine",
+      "Description": "Kolom 7 fomo_ad_log.csv: invested (USD)"
+    },
+    {
+      "Command": "store",
+      "Target": "${adResult}",
+      "Value": "!csvLine",
+      "Description": "Kolom 8 fomo_ad_log.csv: hasil"
+    },
+    {
+      "Command": "csvSave",
+      "Target": "${AD_LOG_FILE}",
+      "Value": "",
+      "Description": "Log AD: waktu, nama, umur(jam), rsi, mc sekarang, mc avg, invested, hasil"
+    },
+    {
+      "Command": "store",
+      "Target": "true",
+      "Value": "!errorIgnore",
+      "Description": "Mulai blok aman: kembali ke profil, kalau gagal akan terdeteksi di siklus berikutnya"
+    },
+    {
+      "Command": "open",
+      "Target": "${PROFILE_URL}",
+      "Value": "",
+      "Description": "Kembali ke profil"
+    },
+    {
+      "Command": "pause",
+      "Target": "5000",
+      "Value": "",
+      "Description": "Tunggu profil termuat setelah kembali"
+    },
+    {
+      "Command": "store",
+      "Target": "false",
+      "Value": "!errorIgnore",
+      "Description": "Akhiri blok aman: error berikutnya kembali menghentikan macro"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "needOpen",
+      "Description": "Hapus tanda: profil sudah dibuka"
+    },
+    {
+      "Command": "store",
+      "Target": "0",
+      "Value": "sinceOpen",
+      "Description": "Reset hitungan scan sejak profil dibuka"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "resumeK",
+      "Description": "Lanjut ke coin berikutnya setelah balik ke profil, bukan dari coin pertama"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${n}) + 1;",
+      "Value": "k",
+      "Description": "Keluar dari loop scan; scan ulang dari awal di siklus berikutnya"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: kondisi di atas tidak terpenuhi (Coin belum pernah di-AD pada run ini?)"
+    },
+    {
+      "Command": "echo",
+      "Target": "Kandidat AD ${pName} (${pPct}%) dilewati: sudah pernah di-AD pada run ini",
+      "Value": "orange",
+      "Description": "Info kandidat AD dilewati karena sudah pernah di-AD"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coin belum pernah di-AD pada run ini?"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Belum ada aksi dan margin <= AD_TRIGGER? (kandidat AD)"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Margin coin gagal dibaca?"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Coin ada di daftar EXCLUDE? (kalau ya, dilewati)"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Nama coin gagal dibaca?"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${k}) + 1;",
+      "Value": "k",
+      "Description": "Naik ke coin berikutnya"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Loop per coin: dari nomor awal sampai coin terakhir"
+    },
+    {
+      "Command": "if",
+      "Target": "${acted} == 0",
+      "Value": "",
+      "Description": "Tidak ada aksi pada putaran ini?"
+    },
+    {
+      "Command": "echo",
+      "Target": "Tidak ada aksi di scan ini",
+      "Value": "green",
+      "Description": "Info: satu putaran selesai tanpa aksi"
+    },
+    {
+      "Command": "pause",
+      "Target": "${SCAN_INTERVAL}",
+      "Value": "",
+      "Description": "Jeda antar putaran penuh"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "resumeK",
+      "Description": "Putaran selesai, putaran berikutnya mulai dari coin pertama"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Tidak ada aksi pada putaran ini?"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${iter}) + 1;",
+      "Value": "iter",
+      "Description": "Hitung siklus ini ke MAX_LOOP, ada aksi atau tidak"
+    },
+    {
+      "Command": "else",
+      "Target": "",
+      "Value": "",
+      "Description": "Sebaliknya: halaman bermasalah"
+    },
+    {
+      "Command": "executeScript_Sandbox",
+      "Target": "return Number(${pageFail}) + 1;",
+      "Value": "pageFail",
+      "Description": "Tambah 1 hitungan kegagalan halaman berturut-turut"
+    },
+    {
+      "Command": "echo",
+      "Target": "HALAMAN FOMO BERMASALAH (gagal membuka/membaca profil). Kegagalan berturut-turut: ${pageFail}. Menunggu ${ERR_PAUSE} ms lalu memuat ulang profil",
+      "Value": "red",
+      "Description": "Info: halaman crash atau tidak merespons, macro tetap jalan dan mencoba lagi"
+    },
+    {
+      "Command": "store",
+      "Target": "1",
+      "Value": "needOpen",
+      "Description": "Paksa buka ulang profil di siklus berikutnya"
+    },
+    {
+      "Command": "pause",
+      "Target": "${ERR_PAUSE}",
+      "Value": "",
+      "Description": "Beri waktu halaman/browser pulih sebelum dicoba lagi"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Halaman sehat? (kalau tidak, lompat ke pemulihan di akhir siklus)"
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": "",
+      "Description": "Akhir blok: Loop utama: jalan selama belum dihentikan (done) dan belum melewati MAX_LOOP"
+    },
+    {
+      "Command": "echo",
+      "Target": "fomo_scanner selesai (${total} siklus)",
+      "Value": "green",
+      "Description": "Info script selesai"
+    }
+  ]
+}

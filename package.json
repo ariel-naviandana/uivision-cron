@@ -1,10 +1,10 @@
 {
   "name": "uivision-cron",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "scheduler/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
+    "start": "node scheduler/index.js",
     "pw": "node pw/index.js",
     "pw:login": "node pw/login.js"
   },
