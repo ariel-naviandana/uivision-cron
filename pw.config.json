@@ -9,10 +9,7 @@
     "userDataDir": "C:\\chrome-profiles\\fomo-playwright",
     "headless": false,
     "blockResources": false,
-    "viewport": {
-      "width": 1600,
-      "height": 1000
-    }
+    "viewport": null
   },
   "profileName": "VagueCoralJay",
   "startTokenUrl": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
@@ -20,11 +17,11 @@
   "dryRunAd": true,
   "tpCustom": {},
   "exclude": [],
-  "minProfit": 20,
+  "minProfit": 15,
   "trail": {
-    "enabled": false,
-    "start": 30,
-    "drop": 10
+    "enabled": true,
+    "start": 20,
+    "drop": 5
   },
   "adTrigger": -25,
   "adMinAgeH": 6,

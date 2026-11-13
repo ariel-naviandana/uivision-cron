@@ -42,13 +42,13 @@
       "Command": "store",
       "Target": "",
       "Value": "EXCLUDE",
-      "Description": "Coin yang dilewati total (tidak dibaca, tidak dilog, tidak di-sell/AD). Pisahkan dengan |, contoh: E/ACC|COLLECTOOOR. Kosong = tidak ada. Tidak peka huruf besar/kecil."
+      "Description": "Coin yang dilewati total (tidak dibaca, tidak dilog, tidak di-sell/AD). Pisahkan dengan |, contoh: E/ACC|GATO. Kosong = tidak ada. Tidak peka huruf besar/kecil."
     },
     {
       "Command": "store",
       "Target": "",
       "Value": "TP_CUSTOM",
-      "Description": "TP khusus per coin saat USE_TRAIL=0, format NAMA:TP|NAMA:TP (coin lain pakai MIN_PROFIT)"
+      "Description": "TP khusus per coin, menggantikan MIN_PROFIT untuk coin itu (hanya saat USE_TRAIL=0). Format NAMA:TP dipisah |, contoh: E/ACC:10|COLLECTOOOR:30. Kosong = semua coin pakai MIN_PROFIT. Tidak peka huruf besar/kecil."
     },
     {
       "Command": "store",

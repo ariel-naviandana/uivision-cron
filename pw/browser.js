@@ -18,10 +18,14 @@ const BLOCK_TYPES = new Set(['media', 'font']);
 
 async function openBrowser(cfg) {
     const b = cfg.browser;
+    // viewport null = halaman ikut ukuran jendela Chrome (jendela dibuka maximize).
+    // Viewport angka tetap bisa membuat halaman terpotong kalau lebih besar dari jendela / scaling Windows.
+    const fitWindow = !b.viewport && !b.headless;
     const context = await chromium.launchPersistentContext(b.userDataDir, {
         executablePath: b.chromePath,
         headless: !!b.headless,
-        viewport: b.viewport,
+        viewport: fitWindow ? null : (b.viewport || { width: 1600, height: 1000 }),
+        args: fitWindow ? ['--start-maximized'] : [],
         // args: [
         //     '--disable-blink-features=AutomationControlled',
         //     '--disable-backgrounding-occluded-windows',

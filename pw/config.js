@@ -18,7 +18,7 @@ const DEFAULTS = {
         userDataDir: 'C:\\chrome-profiles\\fomo-playwright',
         headless: false,
         blockResources: false,
-        viewport: { width: 1600, height: 1000 },
+        viewport: null, // null = ikut ukuran jendela (maximize); isi { width, height } untuk ukuran tetap / headless
     },
     profileName: 'VagueCoralJay',  // nama profil fomo (cukup ubah ini)
     // Halaman awal scan: detail coin apa saja (tanpa ?r=), posisi dibaca dari panel "Your positions"

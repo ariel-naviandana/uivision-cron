@@ -31,12 +31,12 @@ transaksi yang sedang berjalan diselesaikan dulu, tidak dipotong di tengah seper
 | `startTokenUrl` | Halaman awal scan: detail coin apa saja tanpa `?r=`, posisi dibaca dari panel "Your positions" | START_TOKEN_URL |
 | `dryRunSell` | `true` = berhenti sebelum klik konfirmasi Sell | DRY_RUN_SELL |
 | `dryRunAd` | `true` = isi nominal tapi tidak klik Buy | DRY_RUN_AD |
-| `tpCustom` | TP khusus per coin saat trailing mati (coin lain pakai `minProfit`), contoh `{ "E/ACC": 10, "COLLECTOOOR": 30 }` | TP_CUSTOM |
+| `tpCustom` | TP khusus per coin, menggantikan `minProfit` untuk coin itu (hanya saat trailing mati). Nama tidak peka huruf besar/kecil. Contoh `{ "E/ACC": 10, "COLLECTOOOR": 30 }`, kosong `{}` | TP_CUSTOM (`E/ACC:10\|COLLECTOOOR:30`) |
 | `trail.enabled` | `true` = sell pakai trailing stop (`tpCustom` tidak dipakai). `false` = sell saat margin >= `minProfit` (seperti TP) | USE_TRAIL |
 | `trail.start` | Trailing mulai saat margin >= nilai ini (%) | TRAIL_START |
 | `trail.drop` | Sell kalau margin turun >= sekian POIN dari puncak (puncak 50, drop 10 -> sell di <= 40) | TRAIL_DROP |
 | `minProfit` | Trailing: sell hanya kalau margin saat itu >= nilai ini. Tanpa trailing: dipakai sebagai TP (%) | MIN_PROFIT |
-| `exclude` | Coin yang dilewati total, contoh `["E/ACC"]` | EXCLUDE |
+| `exclude` | Coin yang dilewati total (tidak di-sell/AD). Nama tidak peka huruf besar/kecil. Contoh `["E/ACC", "GATO"]`, kosong `[]` | EXCLUDE (`E/ACC\|GATO`) |
 | `adTrigger` | Margin (%) yang memicu cek AD (margin <= nilai ini) | AD_TRIGGER |
 | `adMinAgeH` | Umur coin minimal (jam) untuk AD | AD_MIN_AGE_H |
 | `adUseRsi` / `adRsiMax` | RSI jadi syarat AD / RSI maksimal | AD_USE_RSI / AD_RSI_MAX |
@@ -48,7 +48,7 @@ transaksi yang sedang berjalan diselesaikan dulu, tidak dipotong di tengah seper
 | `clickTries` / `clickFailMax` | Percobaan klik icon / auto-skip coin yang sering gagal diklik | CLICK_TRIES / CLICK_FAIL_MAX |
 | `errPauseMs` | Jeda setelah halaman fomo bermasalah | ERR_PAUSE |
 | `output.*` | Folder dan nama file log CSV | CSV_FILE, AD_LOG_FILE, SELL_LOG_FILE, TRAIL_FILE |
-| `browser.*` | Lokasi Chrome, folder profil bot, headless, viewport | - |
+| `browser.*` | Lokasi Chrome, folder profil bot, headless, viewport (`null` = ikut ukuran jendela, maximize) | - |
 | `wait.*` | Waktu tunggu (ms) halaman awal, detail coin, klik, RSI, navigasi | pause di macro |
 | `selectors.*` | XPath/CSS elemen fomo (ubah di sini kalau tampilan fomo berubah) | XPath di macro |
 
