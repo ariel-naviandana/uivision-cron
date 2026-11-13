@@ -10,6 +10,7 @@ const { FomoScanner } = require('./scanner');
 
 // selector wajib di config/paths.json supaya scanner buy bisa jalan
 const REQUIRED = ['watchRow', 'watchRowName', 'watchRowMcap'];
+// selectors.watchScroll (opsional): elemen sidebar yang bisa di-scroll, supaya semua coin watchlist terbaca
 
 class BuyScanner {
     constructor(page, cfg) {
@@ -47,11 +48,15 @@ class BuyScanner {
     async open() {
         await this.page.goto(this.cfg.startUrl, { waitUntil: 'domcontentloaded' });
         await sleep(this.cfg.wait.startLoadMs);
+        // Buka sidebar watchlist. Selector hanya cocok kalau watchlist belum aktif (aria-pressed bukan true),
+        // jadi kalau sudah terbuka tidak diklik lagi (klik ulang bisa menutupnya).
         if (this.sel.watchlistTab) {
-            await this.x(this.sel.watchlistTab).first()
-                .click({ timeout: this.cfg.wait.clickTimeoutMs })
-                .catch(() => log('[BUY] Tab watchlist tidak bisa diklik', 'warn'));
-            await sleep(1500);
+            const tab = this.x(this.sel.watchlistTab).first();
+            if (await tab.count().catch(() => 0)) {
+                await tab.click({ timeout: this.cfg.wait.clickTimeoutMs })
+                    .catch(() => log('[BUY] Tab watchlist tidak bisa diklik', 'warn'));
+                await sleep(1500);
+            }
         }
         this.needOpen = false;
         this.sinceOpen = 0;
@@ -84,39 +89,67 @@ class BuyScanner {
         if (this.needOpen) await this.open();
         else this.sinceOpen++;
 
+        // Watchlist fomo hanya merender baris yang terlihat (virtual list), jadi sidebar di-scroll
+        // dari atas sampai bawah dan setiap baris dibaca sekali (key = link coin).
         const rows = this.x(this.sel.watchRow);
         await rows.first().waitFor({ state: 'attached', timeout: this.cfg.wait.elementTimeoutMs }).catch(() => {});
-        const n = await rows.count().catch(() => 0);
-        log(`[BUY] Siklus #${this.total} | ${n} coin di watchlist`);
-        if (n === 0) this.needOpen = true;
+        const scroller = this.sel.watchScroll ? this.x(this.sel.watchScroll).first() : null;
+        const canScroll = scroller && await scroller.count().catch(() => 0);
+        if (canScroll) await scroller.evaluate((el) => { el.scrollTop = 0; }).catch(() => {});
+        await sleep(300);
 
-        for (let k = 1; k <= n && !this.stopped; k++) {
-            const row = this.x(`${this.sel.watchRow}[${k}]`);
-            const name = await this.text(row.locator(`xpath=${this.sel.watchRowName}`), 3000);
-            if (!name) continue;
-            const key = name.toLowerCase();
-            const c = this.cfg.buyMap.get(key);
-            if (!c) continue; // coin di watchlist tapi tidak ada di config: diabaikan
+        const seen = new Set();
+        let acted = false;
+        for (let pass = 0; pass < 50 && !acted && !this.stopped; pass++) {
+            const n = await rows.count().catch(() => 0);
+            for (let i = 0; i < n && !acted && !this.stopped; i++) {
+                const row = rows.nth(i);
+                const href = await row.getAttribute('href', { timeout: 2000 }).catch(() => null);
+                const name = await this.text(row.locator(`xpath=${this.sel.watchRowName}`), 3000);
+                if (!name) continue;
+                const id = href || name;
+                if (seen.has(id)) continue;
+                seen.add(id);
 
-            const mcapText = await this.text(row.locator(`xpath=${this.sel.watchRowMcap}`), 3000);
-            const mcap = money(mcapText);
-            const inRange = mcap > 0 && mcap >= c.mcapMin && mcap <= c.mcapMax;
-            log(`[BUY] ${name} | MC ${mcap} | range ${c.mcapMin} - ${c.mcapMax} | ${inRange ? 'MASUK RANGE' : 'di luar range'}`,
-                inRange ? 'ok' : 'info');
-            if (!inRange) continue;
+                const key = name.toLowerCase();
+                const c = this.cfg.buyMap.get(key);
+                if (!c) continue; // coin di watchlist tapi tidak ada di config: diabaikan
 
-            if (this.done.has(key)) {
-                log(`[BUY] ${name} dilewati: sudah diproses di run ini`);
-                continue;
+                const mcapText = await this.text(row.locator(`xpath=${this.sel.watchRowMcap}`), 3000);
+                const mcap = money(mcapText);
+                const inRange = mcap > 0 && mcap >= c.mcapMin && mcap <= c.mcapMax;
+                log(`[BUY] ${name} | MC ${mcap} | range ${c.mcapMin} - ${c.mcapMax} | ${inRange ? 'MASUK RANGE' : 'di luar range'}`,
+                    inRange ? 'ok' : 'info');
+                if (!inRange) continue;
+
+                if (this.done.has(key)) {
+                    log(`[BUY] ${name} dilewati: sudah diproses di run ini`);
+                    continue;
+                }
+                if ((this.failMap[key] || 0) >= this.cfg.clickFailMax) {
+                    log(`[BUY] ${name} dilewati: gagal diklik >= ${this.cfg.clickFailMax} kali`, 'warn');
+                    continue;
+                }
+
+                // baris dicari ulang lewat link-nya: virtual list bisa merender ulang / menggeser urutan baris
+                const target = href ? this.x(`${this.sel.watchRow}[@href="${href}"]`).first() : row;
+                await this.doBuy(target, key, c, mcap);
+                this.needOpen = true; // halaman sudah pindah ke detail coin
+                acted = true;
             }
-            if ((this.failMap[key] || 0) >= this.cfg.clickFailMax) {
-                log(`[BUY] ${name} dilewati: gagal diklik >= ${this.cfg.clickFailMax} kali`, 'warn');
-                continue;
-            }
-
-            await this.doBuy(row, key, c, mcap);
-            this.needOpen = true; // halaman sudah pindah ke detail coin
-            break;
+            if (acted || !canScroll) break;
+            // scroll ke bawah; berhenti kalau sudah mentok
+            const moved = await scroller.evaluate((el) => {
+                const before = el.scrollTop;
+                el.scrollTop = before + Math.max(100, el.clientHeight * 0.8);
+                return el.scrollTop !== before;
+            }).catch(() => false);
+            if (!moved) break;
+            await sleep(600);
+        }
+        if (!acted) {
+            log(`[BUY] Siklus #${this.total} | ${seen.size} coin di watchlist dicek`);
+            if (seen.size === 0) this.needOpen = true;
         }
 
         await this.wait(Number(this.b.scanIntervalMs) || 10000);

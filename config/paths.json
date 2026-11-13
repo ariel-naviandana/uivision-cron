@@ -27,11 +27,12 @@
     "minOrderButton": "//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]",
     "insufficientButton": "//button[contains(translate(normalize-space(.),'INSUFFICIENTBALANCE','insufficientbalance'),'insufficient balance')]",
     "buyTab": "(//div[button[normalize-space(.)='Sell']]/button[normalize-space(.)='Buy'])[1]",
-    "watchlistTab": "",
-    "watchRow": "",
-    "watchRowName": "",
-    "watchRowMcap": "",
+    "watchlistTab": "//button[@aria-label='Watchlist' and not(@aria-pressed='true')]",
+    "watchScroll": "//*[@id='discovery-panels']//div[contains(@class,'overflow-y-auto')][.//div[contains(@class,'legend-list-content-container')]]",
+    "watchRow": "(//*[@id='discovery-panels']//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//*[local-name()='path' and @fill='#FFC74F']])",
+    "watchRowName": ".//span[contains(@class,'text-sm') and contains(@class,'truncate')]",
+    "watchRowMcap": ".//div[contains(@class,'items-end')]/div[1]",
     "watchRowClick": ".//img",
-    "unstarButton": ""
+    "unstarButton": "(//button[@data-slot='tooltip-trigger'][.//*[local-name()='path' and @fill='#FFC74F']])[1]"
   }
 }

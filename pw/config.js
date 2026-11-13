@@ -103,6 +103,7 @@ const DEFAULTS = {
         // ---- scanner buy (watchlist sidebar) ----
         buyTab: "(//div[button[normalize-space(.)='Sell']]/button[normalize-space(.)='Buy'])[1]",
         watchlistTab: '',          // tombol/tab untuk membuka watchlist di sidebar
+        watchScroll: '',           // elemen sidebar yang bisa di-scroll (watchlist hanya merender baris yang terlihat)
         watchRow: '',              // semua baris coin di watchlist, contoh "(//div[...]//a[...])"
         watchRowName: '',          // relatif ke baris: nama coin
         watchRowMcap: '',          // relatif ke baris: teks market cap, contoh "$16.1M MC"

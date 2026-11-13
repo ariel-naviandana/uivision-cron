@@ -78,6 +78,7 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 | `output.positionsFile` / `adLogFile` / `sellLogFile` / `trailFile` / `buyLogFile` | Nama file log posisi / AD / sell / puncak trailing / buy | `"fomo_buy_log.csv"` |
 | `selectors.*` | XPath elemen fomo untuk sell & AD (ubah di sini kalau tampilan fomo berubah) | `"row": "(//a[...])"` |
 | `selectors.watchlistTab` | Buy: tombol/tab untuk membuka watchlist di sidebar. Kosong = tidak diklik | `"//button[...]"` |
+| `selectors.watchScroll` | Buy: panel sidebar yang bisa di-scroll. Watchlist hanya merender coin yang terlihat, jadi panel di-scroll dari atas ke bawah. Kosong = tidak di-scroll | `"//*[@id='discovery-panels']//div[contains(@class,'overflow-y-auto')][...]"` |
 | `selectors.watchRow` | Buy (wajib): semua baris coin di watchlist, dalam kurung supaya bisa diberi nomor `[k]` | `"(//div[...]//a[...])"` |
 | `selectors.watchRowName` | Buy (wajib): nama coin, relatif ke baris | `".//div[...]"` |
 | `selectors.watchRowMcap` | Buy (wajib): teks market cap, relatif ke baris | `".//div[contains(.,'MC')]"` |
