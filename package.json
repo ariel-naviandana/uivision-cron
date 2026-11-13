@@ -1,5 +1,5 @@
 {
-  "name": "uivision-cron",
+  "name": "fomo-scanner",
   "version": "1.0.0",
   "main": "scheduler/index.js",
   "scripts": {

@@ -1,0 +1,21 @@
+{
+  "timezone": "Asia/Jakarta",
+  "schedule": "*/15 * * * *",
+  "runOnStart": true,
+  "restartBrowser": true,
+  "restartWaitMs": 3000,
+  "run": {
+    "sell": true,
+    "ad": true,
+    "buy": false
+  },
+  "profileName": "VagueCoralJay",
+  "startTokenUrl": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
+  "browser": {
+    "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "userDataDir": "C:\\chrome-profiles\\fomo-playwright",
+    "headless": false,
+    "blockResources": false,
+    "viewport": null
+  }
+}

@@ -2,7 +2,7 @@ BUILD EXE (Windows PowerShell, jalankan di ROOT folder project, bukan di build/)
 ==========================================================
 Ada 2 exe:
   1. uivision-scheduler.exe  -> scheduler lama (UI.Vision + cron), dari scheduler/index.js, config: uivision.config.json
-  2. fomo-pw.exe             -> versi Playwright, dari pw/index.js, config: pw.config.json
+  2. fomo-pw.exe             -> versi Playwright, dari pw/index.js, config: folder config\
 
 Exe dibuat dengan Node SEA: isinya node.exe + kode yang di-bundle esbuild.
 File perantara (bundle .js, .blob, config SEA) ada di folder build/, exe hasilnya di root.
@@ -47,12 +47,12 @@ node -e "require('fs').copyFileSync(process.execPath, 'fomo-pw.exe')"
 npx postject fomo-pw.exe NODE_SEA_BLOB build/sea-pw.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
 Kebutuhan saat dijalankan (taruh di folder yang sama dengan exe):
-  - pw.config.json
+  - folder config\ (general.json, sell-ad.json, buy.json, paths.json, timing.json)
   - node_modules\playwright-core   (tidak bisa dimasukkan ke exe, hasil "npm install")
-  - Google Chrome terpasang (path di pw.config.json -> browser.chromePath)
+  - Google Chrome terpasang (path di config\general.json -> browser.chromePath)
 
 Pemakaian:
-  fomo-pw.exe          jalankan scanner sesuai jadwal di pw.config.json
+  fomo-pw.exe          jalankan scanner sesuai jadwal di config\general.json
   fomo-pw.exe login    login ke fomo.family (sekali saja), lalu tutup jendela Chrome
   fomo-pw-login.bat    sama dengan "fomo-pw.exe login", tinggal double-click
 

@@ -1,5 +1,11 @@
-// pw/config.js — baca pw.config.json (pengaturan versi Playwright fomo scanner)
-// File dibaca dari folder exe (kalau dijalankan sebagai .exe) atau folder project.
+// pw/config.js — baca pengaturan versi Playwright dari folder config/
+//   config/general.json  jadwal, browser, profil fomo, halaman awal, fitur yang dijalankan (run.sell/ad/buy)
+//   config/sell-ad.json  sell (TP / trailing) dan AD
+//   config/buy.json      scanner buy (watchlist)
+//   config/paths.json    folder & file log, selector (XPath)
+//   config/timing.json   wait, retry, interval
+// Folder config/ dibaca dari folder exe (kalau dijalankan sebagai .exe) atau folder project.
+// Kalau folder config/ tidak ada, pw.config.json lama (satu file) masih dibaca.
 const fs = require('fs');
 const path = require('path');
 
@@ -23,8 +29,17 @@ const DEFAULTS = {
     profileName: 'VagueCoralJay',  // nama profil fomo (cukup ubah ini)
     // Halaman awal scan: detail coin apa saja (tanpa ?r=), posisi dibaca dari panel "Your positions"
     startTokenUrl: 'https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c',
-    sellEnabled: true,    // false = sell tidak dicek sama sekali (beda dengan dryRunSell)
-    adEnabled: true,      // false = AD tidak dicek sama sekali (beda dengan dryRunAd)
+    // Fitur yang dijalankan (config/general.json -> run). false = fitur dilewati total (beda dengan dry run)
+    sellEnabled: true,
+    adEnabled: true,
+    buyEnabled: false,
+    // Scanner buy (config/buy.json)
+    buy: {
+        dryRunBuy: true,
+        unstarAfterBuy: true,   // unstar coin dari watchlist setelah berhasil beli
+        scanIntervalMs: 10000,  // jeda antar scan watchlist
+        coins: [],              // [{ name, mcapMin, mcapMax, amount }]
+    },
     dryRunSell: true,
     dryRunAd: true,
     tpCustom: {},
@@ -54,7 +69,8 @@ const DEFAULTS = {
         positionsFile: 'fomo_positions.csv',
         adLogFile: 'fomo_ad_log.csv',
         sellLogFile: 'fomo_sell_log.csv',
-        trailFile: 'fomo_trail.csv',      // puncak margin trailing stop per coin
+        trailFile: 'fomo_trail.csv',
+        buyLogFile: 'fomo_buy_log.csv',      // puncak margin trailing stop per coin
     },
     wait: {
         startLoadMs: 5000,  // tunggu halaman awal termuat
@@ -84,6 +100,14 @@ const DEFAULTS = {
         buyInput: "(//input[@placeholder='0' and contains(@class,'flex-1')])[1]",
         buyButton: "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Buy ')]",
         insufficientButton: "//button[contains(translate(normalize-space(.),'INSUFFICIENTBALANCE','insufficientbalance'),'insufficient balance')]",
+        // ---- scanner buy (watchlist sidebar) ----
+        buyTab: "(//div[button[normalize-space(.)='Sell']]/button[normalize-space(.)='Buy'])[1]",
+        watchlistTab: '',          // tombol/tab untuk membuka watchlist di sidebar
+        watchRow: '',              // semua baris coin di watchlist, contoh "(//div[...]//a[...])"
+        watchRowName: '',          // relatif ke baris: nama coin
+        watchRowMcap: '',          // relatif ke baris: teks market cap, contoh "$16.1M MC"
+        watchRowClick: './/img',   // relatif ke baris: yang diklik untuk membuka detail coin
+        unstarButton: '',          // di halaman detail: tombol bintang untuk unstar (hapus dari watchlist)
         minOrderButton: "//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]",
     },
 };
@@ -97,16 +121,42 @@ function merge(base, over) {
     return out;
 }
 
-function loadPwConfig() {
-    const file = path.join(BASE_DIR, 'pw.config.json');
-    let user = {};
+const CONFIG_FILES = ['general.json', 'sell-ad.json', 'buy.json', 'paths.json', 'timing.json'];
+
+function readJson(file) {
     try {
-        user = JSON.parse(fs.readFileSync(file, 'utf8'));
-        console.log(`Config dibaca dari: ${file}`);
+        const v = JSON.parse(fs.readFileSync(file, 'utf8'));
+        console.log(`Config dibaca: ${file}`);
+        return v;
     } catch (e) {
-        console.log(`pw.config.json tidak ditemukan/rusak di ${file} (${e.message}), pakai nilai bawaan`);
+        console.log(`Config tidak ditemukan/rusak: ${file} (${e.message}), pakai nilai bawaan`);
+        return {};
     }
+}
+
+// Gabungkan file-file di config/ jadi satu objek dengan bentuk yang sama seperti DEFAULTS
+function readUserConfig() {
+    const dir = path.join(BASE_DIR, 'config');
+    if (!fs.existsSync(dir)) {
+        // kompatibel: config lama satu file
+        return readJson(path.join(BASE_DIR, 'pw.config.json'));
+    }
+    const [general, sellAd, buy, paths, timing] = CONFIG_FILES.map((f) => readJson(path.join(dir, f)));
+    const { run, ...gen } = general;
+    const user = { ...gen, ...sellAd, ...paths, ...timing };
+    if (run) {
+        if (run.sell !== undefined) user.sellEnabled = run.sell;
+        if (run.ad !== undefined) user.adEnabled = run.ad;
+        if (run.buy !== undefined) user.buyEnabled = run.buy;
+    }
+    if (Object.keys(buy).length) user.buy = buy;
+    return user;
+}
+
+function loadPwConfig() {
+    const user = readUserConfig();
     const cfg = merge(DEFAULTS, user);
+    if (Array.isArray(user.buy?.coins)) cfg.buy.coins = user.buy.coins; // array: ganti, bukan digabung
     // URL halaman awal lengkap = startTokenUrl + ?r=profileName
     cfg.startUrl = `${String(cfg.startTokenUrl).split('?')[0]}?r=${encodeURIComponent(String(cfg.profileName).trim())}`;
     // kompatibel dengan config lama (wait.profileLoadMs). profileUrl lama sengaja diabaikan:
@@ -118,6 +168,15 @@ function loadPwConfig() {
     cfg.tpMap = Object.fromEntries(Object.entries(cfg.tpCustom || {})
         .map(([k, v]) => [String(k).trim().toLowerCase(), Number(v)])
         .filter(([, v]) => Number.isFinite(v)));
+    // daftar coin buy: key nama huruf kecil
+    cfg.buyMap = new Map((cfg.buy.coins || [])
+        .filter((c) => c && c.name)
+        .map((c) => [String(c.name).trim().toLowerCase(), {
+            name: String(c.name).trim(),
+            mcapMin: Number(c.mcapMin),
+            mcapMax: Number(c.mcapMax),
+            amount: Number(c.amount),
+        }]));
     return cfg;
 }
 

@@ -1,0 +1,19 @@
+{
+  "dryRunSell": true,
+  "dryRunAd": true,
+  "minProfit": 15,
+  "tpCustom": {},
+  "trail": {
+    "enabled": true,
+    "start": 20,
+    "drop": 5
+  },
+  "showDust": true,
+  "exclude": [],
+  "adTrigger": -25,
+  "adMinAgeH": 6,
+  "adUseRsi": true,
+  "adRsiMax": 30,
+  "adMinOrderUsd": 0,
+  "adBelowMin": "skip"
+}

@@ -1,0 +1,13 @@
+{
+  "dryRunBuy": true,
+  "unstarAfterBuy": true,
+  "scanIntervalMs": 10000,
+  "coins": [
+    {
+      "name": "CONTOH",
+      "mcapMin": 10000,
+      "mcapMax": 50000,
+      "amount": 5
+    }
+  ]
+}

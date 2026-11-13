@@ -1,59 +1,11 @@
 {
-  "timezone": "Asia/Jakarta",
-  "schedule": "*/15 * * * *",
-  "runOnStart": true,
-  "restartBrowser": true,
-  "restartWaitMs": 3000,
-  "browser": {
-    "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "userDataDir": "C:\\chrome-profiles\\fomo-playwright",
-    "headless": false,
-    "blockResources": false,
-    "viewport": null
-  },
-  "profileName": "VagueCoralJay",
-  "startTokenUrl": "https://fomo.family/tokens/base/0xcbada732173e39521cdbe8bf59a6dc85a9fc7b8c",
-  "sellEnabled": true,
-  "adEnabled": true,
-  "dryRunSell": true,
-  "dryRunAd": true,
-  "tpCustom": {},
-  "exclude": [],
-  "showDust": true,
-  "minProfit": 15,
-  "trail": {
-    "enabled": true,
-    "start": 20,
-    "drop": 5
-  },
-  "adTrigger": -25,
-  "adMinAgeH": 6,
-  "adUseRsi": true,
-  "adRsiMax": 30,
-  "adMinOrderUsd": 0,
-  "adBelowMin": "skip",
-  "maxLoop": 0,
-  "scanIntervalMs": 6000,
-  "reloadEvery": 4,
-  "clickTries": 3,
-  "clickFailMax": 3,
-  "errPauseMs": 60000,
   "output": {
     "dir": "C:\\uivision\\datasources",
     "positionsFile": "fomo_positions.csv",
     "adLogFile": "fomo_ad_log.csv",
     "sellLogFile": "fomo_sell_log.csv",
-    "trailFile": "fomo_trail.csv"
-  },
-  "wait": {
-    "startLoadMs": 5000,
-    "detailMs": 5000,
-    "afterActionMs": 2000,
-    "clickTimeoutMs": 5000,
-    "elementTimeoutMs": 10000,
-    "rsiTimeoutMs": 4000,
-    "rsiTries": 6,
-    "navTimeoutMs": 45000
+    "trailFile": "fomo_trail.csv",
+    "buyLogFile": "fomo_buy_log.csv"
   },
   "selectors": {
     "row": "(//a[@data-slot='hover-card-trigger'][contains(@href,'/tokens/')][.//div[contains(@class,'w-24')]])",
@@ -73,6 +25,13 @@
     "buyInput": "(//input[@placeholder='0' and contains(@class,'flex-1')])[1]",
     "buyButton": "//button[contains(@class,'bg-accent-primary') and starts-with(normalize-space(.),'Buy ')]",
     "minOrderButton": "//button[contains(translate(normalize-space(.),'MINIMUM','minimum'),'minimum')]",
-    "insufficientButton": "//button[contains(translate(normalize-space(.),'INSUFFICIENTBALANCE','insufficientbalance'),'insufficient balance')]"
+    "insufficientButton": "//button[contains(translate(normalize-space(.),'INSUFFICIENTBALANCE','insufficientbalance'),'insufficient balance')]",
+    "buyTab": "(//div[button[normalize-space(.)='Sell']]/button[normalize-space(.)='Buy'])[1]",
+    "watchlistTab": "",
+    "watchRow": "",
+    "watchRowName": "",
+    "watchRowMcap": "",
+    "watchRowClick": ".//img",
+    "unstarButton": ""
   }
 }

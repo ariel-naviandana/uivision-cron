@@ -1,0 +1,18 @@
+{
+  "maxLoop": 0,
+  "scanIntervalMs": 6000,
+  "reloadEvery": 4,
+  "clickTries": 3,
+  "clickFailMax": 3,
+  "errPauseMs": 60000,
+  "wait": {
+    "startLoadMs": 5000,
+    "detailMs": 5000,
+    "afterActionMs": 2000,
+    "clickTimeoutMs": 5000,
+    "elementTimeoutMs": 10000,
+    "rsiTimeoutMs": 4000,
+    "rsiTries": 6,
+    "navTimeoutMs": 45000
+  }
+}

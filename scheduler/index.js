@@ -11,7 +11,7 @@ const BASE_DIR = isExe ? path.dirname(process.execPath) : path.join(__dirname, '
 // Nilai bawaan kalau uivision.config.json tidak ada atau ada key yang kosong
 const defaults = {
     macroName: 'fomo_scanner',
-    uivisionHtml: 'file:///C:/coding/uivision-cron/uivision.html',
+    uivisionHtml: 'file:///C:/coding/fomo-scanner/uivision.html',
     timezone: 'Asia/Jakarta',
     schedule: '*/5 * * * *',
     killWaitMs: 3000,

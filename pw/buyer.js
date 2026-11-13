@@ -1,0 +1,255 @@
+// pw/buyer.js — scanner buy: pantau watchlist (sidebar fomo) di tab kedua
+// Coin di watchlist yang terdaftar di config/buy.json dicek market cap-nya (dibaca dari sidebar).
+// Kalau market cap masuk range [mcapMin, mcapMax] -> buka detail coin, beli sebesar amount,
+// lalu unstar supaya coin hilang dari watchlist (tidak terbeli dua kali).
+// Log: fomo_buy_log.csv (waktu, nama, mcap, mcapMin, mcapMax, nominal, hasil)
+//   hasil: DRY_RUN_STOP / BOUGHT / BOUGHT_UNSTAR_GAGAL / BUY_GAGAL / BUY_MISMATCH /
+//          BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / DETAIL_MISMATCH
+const { log, sleep, nowTs, money, appendCsv } = require('./util');
+const { FomoScanner } = require('./scanner');
+
+// selector wajib di config/paths.json supaya scanner buy bisa jalan
+const REQUIRED = ['watchRow', 'watchRowName', 'watchRowMcap'];
+
+class BuyScanner {
+    constructor(page, cfg) {
+        this.page = page;
+        this.cfg = cfg;
+        this.sel = cfg.selectors;
+        this.out = cfg.output;
+        this.b = cfg.buy;
+        this.needOpen = true;
+        this.sinceOpen = 0;
+        this.done = new Set();   // coin yang sudah diproses di run ini (beli / dry run / gagal permanen)
+        this.failMap = {};       // hitungan gagal-klik per coin
+        this.total = 0;
+        this.stopped = false;
+        this.warnedMissing = false;
+    }
+
+    async wait(ms) {
+        const end = Date.now() + ms;
+        while (!this.stopped && Date.now() < end) await sleep(Math.min(500, end - Date.now()));
+    }
+
+    x(q) {
+        return this.page.locator(`xpath=${q}`);
+    }
+
+    async text(locator, timeout) {
+        try {
+            return ((await locator.first().textContent({ timeout })) || '').replace(/\s+/g, ' ').trim();
+        } catch {
+            return null;
+        }
+    }
+
+    async open() {
+        await this.page.goto(this.cfg.startUrl, { waitUntil: 'domcontentloaded' });
+        await sleep(this.cfg.wait.startLoadMs);
+        if (this.sel.watchlistTab) {
+            await this.x(this.sel.watchlistTab).first()
+                .click({ timeout: this.cfg.wait.clickTimeoutMs })
+                .catch(() => log('[BUY] Tab watchlist tidak bisa diklik', 'warn'));
+            await sleep(1500);
+        }
+        this.needOpen = false;
+        this.sinceOpen = 0;
+    }
+
+    logBuy(ts, c, mcap, result) {
+        appendCsv(this.out.dir, this.out.buyLogFile, [ts, c.name, mcap, c.mcapMin, c.mcapMax, c.amount, result]);
+    }
+
+    // ---------- Satu siklus scan watchlist ----------
+    async cycle() {
+        this.total++;
+        const missing = REQUIRED.filter((k) => !this.sel[k]);
+        if (missing.length) {
+            if (!this.warnedMissing) {
+                log(`[BUY] Selector belum diisi di config/paths.json: ${missing.join(', ')}. Scanner buy menunggu`, 'warn');
+                this.warnedMissing = true;
+            }
+            await this.wait(60000);
+            return;
+        }
+        if (this.cfg.buyMap.size === 0) {
+            if (!this.warnedMissing) log('[BUY] Belum ada coin di config/buy.json -> coins. Scanner buy menunggu', 'warn');
+            this.warnedMissing = true;
+            await this.wait(60000);
+            return;
+        }
+
+        if (this.sinceOpen >= this.cfg.reloadEvery) this.needOpen = true;
+        if (this.needOpen) await this.open();
+        else this.sinceOpen++;
+
+        const rows = this.x(this.sel.watchRow);
+        await rows.first().waitFor({ state: 'attached', timeout: this.cfg.wait.elementTimeoutMs }).catch(() => {});
+        const n = await rows.count().catch(() => 0);
+        log(`[BUY] Siklus #${this.total} | ${n} coin di watchlist`);
+        if (n === 0) this.needOpen = true;
+
+        for (let k = 1; k <= n && !this.stopped; k++) {
+            const row = this.x(`${this.sel.watchRow}[${k}]`);
+            const name = await this.text(row.locator(`xpath=${this.sel.watchRowName}`), 3000);
+            if (!name) continue;
+            const key = name.toLowerCase();
+            const c = this.cfg.buyMap.get(key);
+            if (!c) continue; // coin di watchlist tapi tidak ada di config: diabaikan
+
+            const mcapText = await this.text(row.locator(`xpath=${this.sel.watchRowMcap}`), 3000);
+            const mcap = money(mcapText);
+            const inRange = mcap > 0 && mcap >= c.mcapMin && mcap <= c.mcapMax;
+            log(`[BUY] ${name} | MC ${mcap} | range ${c.mcapMin} - ${c.mcapMax} | ${inRange ? 'MASUK RANGE' : 'di luar range'}`,
+                inRange ? 'ok' : 'info');
+            if (!inRange) continue;
+
+            if (this.done.has(key)) {
+                log(`[BUY] ${name} dilewati: sudah diproses di run ini`);
+                continue;
+            }
+            if ((this.failMap[key] || 0) >= this.cfg.clickFailMax) {
+                log(`[BUY] ${name} dilewati: gagal diklik >= ${this.cfg.clickFailMax} kali`, 'warn');
+                continue;
+            }
+
+            await this.doBuy(row, key, c, mcap);
+            this.needOpen = true; // halaman sudah pindah ke detail coin
+            break;
+        }
+
+        await this.wait(Number(this.b.scanIntervalMs) || 10000);
+    }
+
+    // ---------- Beli satu coin ----------
+    async doBuy(row, key, c, mcap) {
+        const W = this.cfg.wait;
+        const ts = nowTs();
+        log(`[BUY] ${c.name}: market cap ${mcap} masuk range, beli $${c.amount}`, 'ok');
+
+        if (!(c.amount > 0)) {
+            log(`[BUY] ${c.name}: amount di config tidak valid (${c.amount})`, 'err');
+            this.done.add(key);
+            this.logBuy(ts, c, mcap, 'AMOUNT_TIDAK_VALID');
+            return;
+        }
+
+        // buka detail coin dari baris watchlist
+        const href = await row.getAttribute('href', { timeout: 2000 }).catch(() => null)
+            || await row.locator('xpath=.//a[contains(@href,"/tokens/")]').first().getAttribute('href', { timeout: 2000 }).catch(() => null);
+        let clicked = false;
+        for (let t = 1; t <= this.cfg.clickTries && !clicked; t++) {
+            try {
+                const target = this.sel.watchRowClick ? row.locator(`xpath=${this.sel.watchRowClick}`).first() : row;
+                await target.click({ timeout: W.clickTimeoutMs });
+                clicked = true;
+            } catch {
+                log(`[BUY] Klik ${c.name} gagal, coba lagi... (${t}/${this.cfg.clickTries})`, 'warn');
+                await sleep(1500);
+            }
+        }
+        if (!clicked) {
+            this.failMap[key] = (this.failMap[key] || 0) + 1;
+            this.logBuy(ts, c, mcap, 'CLICK_GAGAL');
+            return;
+        }
+        this.failMap[key] = 0;
+
+        if (href) {
+            const p = href.split('?')[0];
+            await this.page.waitForURL((u) => u.toString().includes(p), { timeout: W.elementTimeoutMs }).catch(() => {});
+        }
+        await sleep(W.detailMs);
+        if (href && !this.page.url().includes(href.split('?')[0])) {
+            log(`[BUY] Halaman detail ${c.name} tidak terbuka (url: ${this.page.url()})`, 'err');
+            this.logBuy(ts, c, mcap, 'DETAIL_MISMATCH');
+            return;
+        }
+
+        // pastikan tab Buy aktif, isi nominal, baca tombol
+        await this.x(this.sel.buyTab).first().click({ timeout: W.clickTimeoutMs }).catch(() => {});
+        await sleep(500);
+        let buyText = null;
+        try {
+            await this.x(this.sel.buyInput).first().fill(String(c.amount), { timeout: W.elementTimeoutMs });
+            await sleep(1000);
+            buyText = await this.text(this.x(this.sel.buyButton), W.elementTimeoutMs);
+        } catch { /* dicek di bawah */ }
+
+        if (!buyText) {
+            const minText = await this.text(this.x(this.sel.minOrderButton), 1500);
+            if (minText) {
+                log(`[BUY] ${c.name} dibatalkan: nominal $${c.amount} di bawah minimum (${minText})`, 'warn');
+                this.done.add(key);
+                this.logBuy(ts, c, mcap, 'BUY_MIN_ORDER');
+                return;
+            }
+            const balText = await this.text(this.x(this.sel.insufficientButton), 1500);
+            if (balText) {
+                log(`[BUY] ${c.name} dibatalkan: saldo tidak cukup untuk beli $${c.amount}`, 'warn');
+                this.done.add(key);
+                this.logBuy(ts, c, mcap, 'BUY_SALDO_KURANG');
+                return;
+            }
+        }
+        if (!FomoScanner.actionMatch(buyText, 'Buy', c.name)) {
+            log(`[BUY] Tombol buy tidak cocok (${buyText}), ${c.name} dibatalkan`, 'err');
+            this.logBuy(ts, c, mcap, 'BUY_MISMATCH');
+            return;
+        }
+
+        if (this.b.dryRunBuy) {
+            log(`[BUY] DRY RUN: berhenti sebelum klik '${buyText}' (nominal $${c.amount})`, 'warn');
+            this.done.add(key);
+            this.logBuy(ts, c, mcap, 'DRY_RUN_STOP');
+            return;
+        }
+
+        try {
+            await this.x(this.sel.buyButton).first().click({ timeout: W.elementTimeoutMs });
+        } catch {
+            await sleep(W.afterActionMs);
+            log(`[BUY] BUY GAGAL: ${c.name} (tombol Buy tidak bisa diklik)`, 'err');
+            this.logBuy(ts, c, mcap, 'BUY_GAGAL');
+            return;
+        }
+        await sleep(W.afterActionMs);
+        this.done.add(key);
+        log(`[BUY] BOUGHT: ${c.name} senilai $${c.amount} (MC ${mcap})`, 'ok');
+
+        let result = 'BOUGHT';
+        if (this.b.unstarAfterBuy) {
+            if (!this.sel.unstarButton) {
+                log('[BUY] selectors.unstarButton belum diisi, coin tidak di-unstar', 'warn');
+                result = 'BOUGHT_UNSTAR_GAGAL';
+            } else {
+                try {
+                    await this.x(this.sel.unstarButton).first().click({ timeout: W.clickTimeoutMs });
+                    await sleep(1000);
+                    log(`[BUY] ${c.name} di-unstar dari watchlist`, 'ok');
+                } catch {
+                    log(`[BUY] ${c.name} gagal di-unstar, hapus manual dari watchlist`, 'err');
+                    result = 'BOUGHT_UNSTAR_GAGAL';
+                }
+            }
+        }
+        this.logBuy(ts, c, mcap, result);
+    }
+
+    async run() {
+        log(`[BUY] Scanner buy aktif: ${this.cfg.buyMap.size} coin dipantau | ${this.b.dryRunBuy ? 'DRY RUN' : 'BELI BENERAN'}`);
+        while (!this.stopped && (this.cfg.maxLoop === 0 || this.total < this.cfg.maxLoop)) {
+            try {
+                await this.cycle();
+            } catch (e) {
+                log(`[BUY] Error siklus: ${e.message}`, 'err');
+                this.needOpen = true;
+                await this.wait(5000);
+            }
+        }
+        log(`[BUY] Run selesai (${this.total} siklus)`, 'ok');
+    }
+}
+
+module.exports = { BuyScanner };

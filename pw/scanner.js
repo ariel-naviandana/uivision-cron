@@ -432,7 +432,7 @@ class FomoScanner {
             log(`AD BUY: ${name} senilai $${amount}`, 'ok');
             d.result = 'BOUGHT';
             // avg entry berubah setelah AD, puncak trailing lama tidak berlaku lagi
-            if (this.cfg.trail.enabled && this.curKey && this.trailMap[this.curKey] !== undefined) this.setTrail(ts, this.curKey, name, null);
+            if (this.cfg.trail.enabled && this.curKey && this.trailMap[this.curKey] !== undefined) this.setTrail(nowTs(), this.curKey, name, null);
             this.adDone.add(name);
         } catch {
             await sleep(W.afterActionMs);

@@ -7,17 +7,22 @@
 // Setiap run baru dimulai dengan state baru (daftar coin yang sudah di-AD & hitungan gagal-klik
 // di-reset), sama seperti macro yang dijalankan ulang oleh scheduler lama.
 // Run lama dihentikan dengan rapi: transaksi yang sedang berjalan diselesaikan dulu, tidak dipotong.
+// Dua tab: tab 1 = sell & AD (panel Your positions), tab 2 = buy (watchlist). Fitur yang jalan diatur
+// di config/general.json -> run { sell, ad, buy }.
 const cron = require('node-cron');
 const { loadPwConfig } = require('./config');
 const { openBrowser } = require('./browser');
 const { FomoScanner } = require('./scanner');
+const { BuyScanner } = require('./buyer');
 const { log, sleep } = require('./util');
 
 const cfg = loadPwConfig();
 
 let context = null;
 let page = null;
+let buyPage = null;
 let scanner = null;
+let buyer = null;
 let runPromise = null;
 let closing = false;   // true saat browser sengaja ditutup (restart / berhenti)
 let busy = false;      // true saat proses ganti run sedang berlangsung
@@ -26,13 +31,16 @@ async function ensureBrowser() {
     if (context) return;
     context = await openBrowser(cfg);
     page = context.pages()[0] || await context.newPage();
+    if (cfg.buyEnabled) buyPage = await context.newPage();
     context.on('close', () => {
         context = null;
         page = null;
+        buyPage = null;
         if (closing) return;
         log('Browser tertutup tanpa diminta. Dibuka ulang di jadwal berikutnya'
             + (cfg.schedule ? '' : ' (tanpa jadwal: bot berhenti, jalankan ulang npm run pw)'), 'err');
         if (scanner) scanner.stopped = true;
+        if (buyer) buyer.stopped = true;
         if (!cfg.schedule) process.exit(1);
     });
 }
@@ -43,17 +51,20 @@ async function closeBrowser() {
     await context.close().catch(() => {});
     context = null;
     page = null;
+    buyPage = null;
     closing = false;
 }
 
 async function stopRun() {
-    if (!scanner) return;
-    scanner.stopped = true;
+    if (!scanner && !buyer) return;
+    if (scanner) scanner.stopped = true;
+    if (buyer) buyer.stopped = true;
     if (runPromise) {
         log('Menunggu siklus yang sedang berjalan selesai...');
         await runPromise.catch(() => {});
     }
     scanner = null;
+    buyer = null;
     runPromise = null;
 }
 
@@ -72,9 +83,18 @@ async function startRun(reason) {
             await sleep(cfg.restartWaitMs);
         }
         await ensureBrowser();
-        scanner = new FomoScanner(page, cfg);
-        const current = scanner;
-        runPromise = current.run().catch((e) => log(`Run berhenti karena error: ${e.message}`, 'err'));
+        const jobs = [];
+        if (cfg.sellEnabled !== false || cfg.adEnabled !== false) {
+            scanner = new FomoScanner(page, cfg);
+            jobs.push(scanner.run().catch((e) => log(`Run sell/AD berhenti karena error: ${e.message}`, 'err')));
+        }
+        if (cfg.buyEnabled) {
+            if (!buyPage) buyPage = await context.newPage();
+            buyer = new BuyScanner(buyPage, cfg);
+            jobs.push(buyer.run().catch((e) => log(`Run buy berhenti karena error: ${e.message}`, 'err')));
+        }
+        if (!jobs.length) log('Semua fitur (sell, ad, buy) dimatikan di config/general.json -> run', 'warn');
+        runPromise = Promise.all(jobs);
     } catch (e) {
         log(`Gagal memulai run: ${e.message}`, 'err');
     } finally {
@@ -85,6 +105,7 @@ async function startRun(reason) {
 async function shutdown() {
     log('Menghentikan bot...');
     if (scanner) scanner.stopped = true;
+    if (buyer) buyer.stopped = true;
     await closeBrowser();
     process.exit(0);
 }
@@ -99,6 +120,7 @@ async function shutdown() {
     const t = cfg.trail;
     console.log(`   Sell        : ${t.enabled ? `trailing mulai ${t.start}% | turun ${t.drop} poin | min profit ${cfg.minProfit}%` : `TP ${cfg.minProfit}% (minProfit)${Object.keys(cfg.tpMap).length ? ` | custom ${JSON.stringify(cfg.tpCustom)}` : ''}`} | ${cfg.sellEnabled === false ? 'NONAKTIF' : cfg.dryRunSell ? 'DRY RUN' : 'JUAL BENERAN'}`);
     console.log(`   AD          : margin <= ${cfg.adTrigger}% | umur >= ${cfg.adMinAgeH}h | RSI ${cfg.adUseRsi ? `<= ${cfg.adRsiMax}` : 'tidak dipakai'} | ${cfg.adEnabled === false ? 'NONAKTIF' : cfg.dryRunAd ? 'DRY RUN' : 'BELI BENERAN'}`);
+    console.log(`   Buy         : ${cfg.buyEnabled ? `${cfg.buyMap.size} coin dipantau | ${cfg.buy.dryRunBuy ? 'DRY RUN' : 'BELI BENERAN'}` : 'NONAKTIF'}`);
     console.log(`   Exclude     : ${cfg.exclude.length ? cfg.exclude.join(', ') : '-'}`);
     console.log(`   Output      : ${cfg.output.dir}`);
     console.log('='.repeat(56));
