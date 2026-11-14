@@ -1,15 +1,19 @@
 {
   "unstarAfterBuy": true,
-  "unstarOnDryRun": true,
-  "scanIntervalMs": 10000,
+  "unstarOnDryRun": false,
   "standbyRandom": true,
-  "mismatchCooldownMs": 120000,
   "coins": [
     {
-      "name": "CONTOH",
+      "name": "CONTOHCOIN",
       "mcapMin": "10K",
       "mcapMax": "50K",
       "amount": 5
+    },
+    {
+      "name": "CONTOHCOIN2",
+      "mcapMin": "50K",
+      "mcapMax": "100K",
+      "amount": 10
     }
   ]
 }

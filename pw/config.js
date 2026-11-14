@@ -151,7 +151,11 @@ function readUserConfig() {
         // kompatibel: config lama satu file
         return readJson(path.join(BASE_DIR, 'pw.config.json'));
     }
-    const [general, sellAd, buy, paths, timing] = CONFIG_FILES.map((f) => readJson(path.join(dir, f)));
+    const [general, sellAd, buy, paths, timingAll] = CONFIG_FILES.map((f) => readJson(path.join(dir, f)));
+    // timing.json: jeda khusus buy dipetakan ke cfg.buy
+    const { buyScanIntervalMs, buyMismatchCooldownMs, ...timing } = timingAll;
+    if (buyScanIntervalMs !== undefined) buy.scanIntervalMs = buyScanIntervalMs;
+    if (buyMismatchCooldownMs !== undefined) buy.mismatchCooldownMs = buyMismatchCooldownMs;
     const { run, dryRun, ...gen } = general;
     const user = { ...gen, ...sellAd, ...paths, ...timing };
     if (run) {

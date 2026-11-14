@@ -1,6 +1,8 @@
 {
   "maxLoop": 0,
   "scanIntervalMs": 6000,
+  "buyScanIntervalMs": 10000,
+  "buyMismatchCooldownMs": 120000,
   "reloadEvery": 4,
   "clickTries": 3,
   "clickFailMax": 3,

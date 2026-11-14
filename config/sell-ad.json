@@ -1,13 +1,18 @@
 {
   "minProfit": 15,
-  "tpCustom": {},
+  "tpCustom": {
+    "CONTOHCOIN": 10,
+    "CONTOHCOIN2": 20
+  },
   "trail": {
     "enabled": true,
     "start": 20,
     "drop": 5
   },
   "showDust": true,
-  "exclude": [],
+  "exclude": [
+    "CONTOHCOIN", "CONTOHCOIN2"
+  ],
   "adTrigger": -25,
   "adMinAgeH": 6,
   "adUseRsi": true,

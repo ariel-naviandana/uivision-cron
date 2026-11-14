@@ -10,7 +10,7 @@
   "run": {
     "sell": true,
     "ad": true,
-    "buy": false
+    "buy": true
   },
   "dryRun": {
     "sell": true,

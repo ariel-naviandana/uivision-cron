@@ -74,9 +74,7 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 |---|---|---|
 | `unstarAfterBuy` | `true` = coin di-unstar (hilang dari watchlist) setelah berhasil beli | `true` |
 | `unstarOnDryRun` | Saat `dryRun.buy: true` (klik Buy dilewati): `true` = coin tetap di-unstar, `false` = coin dibiarkan di watchlist | `true` |
-| `scanIntervalMs` | Jeda (ms) antar scan watchlist, diberi variasi acak +-30% | `10000` |
 | `standbyRandom` | `true` = saat tidak ada yang dibeli, tab pindah ke detail coin watchlist yang dipilih acak (lebih natural) | `true` |
-| `mismatchCooldownMs` | MC di halaman detail tidak masuk range (sidebar glitch) -> coin dilewati selama ini | `120000` |
 | `coins` | Coin yang dipantau. `name` = nama di watchlist (tidak peka huruf besar/kecil), beli `amount` (USD) kalau market cap di antara `mcapMin` dan `mcapMax`. MC boleh ditulis seperti di fomo (`"40.7K"`, `"2.32M"`, `"1.5B"`) atau angka penuh (`40700`), jangan `40` saja (dibaca $40). Coin di watchlist yang tidak ada di sini diabaikan | `[{ "name": "COINA", "mcapMin": "40.7K", "mcapMax": "2.32M", "amount": 5 }]` |
 
 ### `config/paths.json`: selector
@@ -97,6 +95,8 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 |---|---|---|
 | `maxLoop` | Batas jumlah siklus per run. `0` = terus | `0` |
 | `scanIntervalMs` | Jeda (ms) antar scan sell/AD kalau tidak ada aksi | `6000` |
+| `buyScanIntervalMs` | Jeda (ms) antar scan watchlist (scanner buy), diberi variasi acak +-30% | `10000` |
+| `buyMismatchCooldownMs` | Buy: MC di halaman detail tidak masuk range (sidebar glitch) -> coin dilewati selama ini (ms) | `120000` |
 | `reloadEvery` | Reload halaman paksa tiap N scan | `4` |
 | `clickTries` | Percobaan klik icon coin | `3` |
 | `clickFailMax` | Coin di-skip otomatis kalau gagal diklik sebanyak ini (selama satu run) | `3` |
@@ -112,11 +112,11 @@ Kalau tombol Buy berubah jadi "Insufficient balance" (saldo tidak cukup), AD dib
 ## Scanner buy (tab 2)
 1. Buka halaman awal, klik tab watchlist (`selectors.watchlistTab`), baca semua baris watchlist.
 2. Coin yang ada di `config/buy.json -> coins`: market cap dibaca dari sidebar. Kalau di antara `mcapMin` dan `mcapMax`, buka detail coin.
-3. Cek ulang market cap di kotak Market cap halaman detail (MC di sidebar kadang glitch). Tidak masuk range -> batal (MCAP_TIDAK_COCOK), coin dilewati selama `mismatchCooldownMs`.
+3. Cek ulang market cap di kotak Market cap halaman detail (MC di sidebar kadang glitch). Tidak masuk range -> batal (MCAP_TIDAK_COCOK), coin dilewati selama `buyMismatchCooldownMs` (timing.json).
 4. Pilih tab Buy, isi `amount`, cek tombol "Buy <nama>" (minimum order / saldo kurang dicatat dan dilewati).
 5. Klik Buy, lalu unstar coin supaya hilang dari watchlist. `dryRun.buy: true` (di `general.json`) hanya melewati klik Buy. Unstar saat dry run diatur `unstarOnDryRun`.
 6. Setiap coin diproses maksimal 1x per run (termasuk dry run), jadi tidak terbeli dua kali walau unstar gagal.
-7. Kalau tidak ada yang dibeli, tab standby di detail coin watchlist yang dipilih acak (`standbyRandom`), lalu menunggu `scanIntervalMs` +-30%.
+7. Kalau tidak ada yang dibeli, tab standby di detail coin watchlist yang dipilih acak (`standbyRandom`), lalu menunggu `buyScanIntervalMs` (timing.json) +-30%.
 
 ## Log (format sama dengan macro)
 - `fomo_positions.csv`: waktu, nama, nominal, margin
