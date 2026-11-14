@@ -43,6 +43,7 @@ const DEFAULTS = {
     buy: {
         dryRunBuy: true,
         unstarAfterBuy: true,   // unstar coin dari watchlist setelah berhasil beli
+        unstarOnDryRun: true,   // saat dry run (klik Buy dilewati), coin tetap di-unstar
         scanIntervalMs: 10000,  // jeda antar scan watchlist (diberi variasi acak +-30%)
         standbyRandom: true,    // saat standby, pindah ke detail coin watchlist yang dipilih acak
         mismatchCooldownMs: 120000, // MC di detail tidak masuk range -> coin dilewati selama ini

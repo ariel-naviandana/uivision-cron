@@ -1,5 +1,6 @@
 {
   "unstarAfterBuy": true,
+  "unstarOnDryRun": true,
   "scanIntervalMs": 10000,
   "standbyRandom": true,
   "mismatchCooldownMs": 120000,

@@ -284,7 +284,8 @@ class BuyScanner {
         let result;
         if (this.b.dryRunBuy) {
             // dry run: hanya klik Buy yang dilewati, unstar tetap jalan
-            log(`[BUY] DRY RUN: tidak klik '${buyText}' (nominal $${c.amount}), lanjut unstar`, 'warn');
+            log(`[BUY] DRY RUN: tidak klik '${buyText}' (nominal $${c.amount})`
+                + (this.b.unstarAfterBuy && this.b.unstarOnDryRun !== false ? ', lanjut unstar' : ''), 'warn');
             result = 'DRY_RUN_STOP';
         } else {
             try {
@@ -301,7 +302,9 @@ class BuyScanner {
         }
         this.done.add(key);
 
-        if (this.b.unstarAfterBuy) {
+        // unstar setelah beli; saat dry run hanya kalau unstarOnDryRun = true
+        const doUnstar = this.b.unstarAfterBuy && (!this.b.dryRunBuy || this.b.unstarOnDryRun !== false);
+        if (doUnstar) {
             if (!this.sel.unstarButton) {
                 log('[BUY] selectors.unstarButton belum diisi, coin tidak di-unstar', 'warn');
                 result += '_UNSTAR_GAGAL';

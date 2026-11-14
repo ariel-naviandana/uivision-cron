@@ -41,7 +41,7 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 | `run.buy` | `true` = tab kedua dibuka untuk scanner buy (watchlist) | `false` |
 | `dryRun.sell` | `true` = sell berhenti sebelum klik konfirmasi Sell | `true` |
 | `dryRun.ad` | `true` = AD isi nominal tapi tidak klik Buy | `true` |
-| `dryRun.buy` | `true` = scanner buy isi nominal tapi tidak klik Buy (coin tetap di-unstar) | `true` |
+| `dryRun.buy` | `true` = scanner buy isi nominal tapi tidak klik Buy (unstar diatur `unstarOnDryRun` di buy.json) | `true` |
 | `profileName` | Nama profil fomo, dipakai sebagai `?r=` di URL | `"VagueCoralJay"` |
 | `startTokenUrl` | Halaman awal: detail coin apa saja (tanpa `?r=`). Dipakai kedua tab | `"https://fomo.family/tokens/base/0xcbada7..."` |
 | `browser.chromePath` | Lokasi chrome.exe | `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"` |
@@ -72,6 +72,7 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 | Key | Arti | Contoh |
 |---|---|---|
 | `unstarAfterBuy` | `true` = coin di-unstar (hilang dari watchlist) setelah berhasil beli | `true` |
+| `unstarOnDryRun` | Saat `dryRun.buy: true` (klik Buy dilewati): `true` = coin tetap di-unstar, `false` = coin dibiarkan di watchlist | `true` |
 | `scanIntervalMs` | Jeda (ms) antar scan watchlist, diberi variasi acak +-30% | `10000` |
 | `standbyRandom` | `true` = saat tidak ada yang dibeli, tab pindah ke detail coin watchlist yang dipilih acak (lebih natural) | `true` |
 | `mismatchCooldownMs` | MC di halaman detail tidak masuk range (sidebar glitch) -> coin dilewati selama ini | `120000` |
@@ -112,7 +113,7 @@ Kalau tombol Buy berubah jadi "Insufficient balance" (saldo tidak cukup), AD dib
 2. Coin yang ada di `config/buy.json -> coins`: market cap dibaca dari sidebar. Kalau di antara `mcapMin` dan `mcapMax`, buka detail coin.
 3. Cek ulang market cap di kotak Market cap halaman detail (MC di sidebar kadang glitch). Tidak masuk range -> batal (MCAP_TIDAK_COCOK), coin dilewati selama `mismatchCooldownMs`.
 4. Pilih tab Buy, isi `amount`, cek tombol "Buy <nama>" (minimum order / saldo kurang dicatat dan dilewati).
-5. Klik Buy, lalu unstar coin supaya hilang dari watchlist. `dryRun.buy: true` (di `general.json`) hanya melewati klik Buy, unstar tetap jalan.
+5. Klik Buy, lalu unstar coin supaya hilang dari watchlist. `dryRun.buy: true` (di `general.json`) hanya melewati klik Buy. Unstar saat dry run diatur `unstarOnDryRun`.
 6. Setiap coin diproses maksimal 1x per run (termasuk dry run), jadi tidak terbeli dua kali walau unstar gagal.
 7. Kalau tidak ada yang dibeli, tab standby di detail coin watchlist yang dipilih acak (`standbyRandom`), lalu menunggu `scanIntervalMs` +-30%.
 
