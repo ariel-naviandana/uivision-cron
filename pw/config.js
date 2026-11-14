@@ -57,7 +57,7 @@ const DEFAULTS = {
     showDust: true,       // true = posisi dust (kecil) ikut di-scan, false = tidak
     // Sell. minProfit (%):
     //   trail.enabled=false: dipakai sebagai TP, sell saat margin >= minProfit (atau tpCustom per coin)
-    //   trail.enabled=true : trailing stop, sell hanya kalau margin saat itu >= minProfit (tpCustom tidak dipakai)
+    //   trail.enabled=true : trailing stop, sell hanya kalau margin saat itu >= minProfit (atau tpCustom per coin)
     minProfit: 20,
     //   start     : trailing mulai dihitung saat margin >= start (%)
     //   drop      : sell kalau margin turun >= drop POIN dari puncak (puncak 50, drop 10 -> sell di <= 40)

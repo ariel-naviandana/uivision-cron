@@ -66,8 +66,11 @@ class FomoScanner {
         }
         if (peak === undefined) return null;
         const stop = +(peak - t.drop).toFixed(2);
-        log(`TRAIL ${name}: margin ${pct}% | puncak ${peak}% | sell di <= ${stop}% (min profit ${this.cfg.minProfit}%)`);
-        if (pct <= stop && pct >= this.cfg.minProfit) return `trailing stop: puncak ${peak}%, turun ke ${pct}%`;
+        // min profit per coin: tpCustom kalau ada, kalau tidak pakai minProfit global
+        const minP = this.tpFor(name);
+        const custom = this.cfg.tpMap[name.toLowerCase()] !== undefined;
+        log(`TRAIL ${name}: margin ${pct}% | puncak ${peak}% | sell di <= ${stop}% (min profit ${minP}%${custom ? ' dari tpCustom' : ''})`);
+        if (pct <= stop && pct >= minP) return `trailing stop: puncak ${peak}%, turun ke ${pct}%`;
         return null;
     }
 
@@ -508,7 +511,7 @@ class FomoScanner {
             const pct = margin(colText);
             const tp = this.tpFor(name);
             const ts = nowTs();
-            log(`${name} | $${nominal} | ${pct}% | ${this.cfg.trail.enabled ? 'trailing' : `TP ${tp}%`}`, 'ok');
+            log(`${name} | $${nominal} | ${pct}% | ${this.cfg.trail.enabled ? `trailing (min profit ${tp}%)` : `TP ${tp}%`}`, 'ok');
             appendCsv(this.out.dir, this.out.positionsFile, [ts, name, nominal, pct]);
 
             // keputusan sell: trailing stop (kalau aktif, TP tidak dipakai) atau TP biasa

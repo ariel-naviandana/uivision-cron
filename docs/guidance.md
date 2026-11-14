@@ -55,9 +55,9 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 ### `config/sell-ad.json`: sell dan AD (tab 1)
 | Key | Arti | Contoh |
 |---|---|---|
-| `minProfit` | Trailing aktif: sell hanya kalau margin saat itu >= nilai ini. Trailing mati: dipakai sebagai TP (%) | `20` |
-| `tpCustom` | TP khusus per coin, menggantikan `minProfit` untuk coin itu (hanya saat trailing mati). Nama tidak peka huruf besar/kecil. Kosong = `{}` | `{ "E/ACC": 10, "COLLECTOOOR": 30 }` |
-| `trail.enabled` | `true` = sell pakai trailing stop (`tpCustom` tidak dipakai). `false` = sell saat margin >= `minProfit` | `false` |
+| `minProfit` | Trailing aktif: sell hanya kalau margin saat itu >= nilai ini. Trailing mati: dipakai sebagai TP (%). Coin di `tpCustom` pakai nilainya sendiri | `20` |
+| `tpCustom` | `minProfit` khusus per coin, menggantikan `minProfit` untuk coin itu. Trailing mati: jadi TP coin itu. Trailing aktif: jadi batas profit minimal trailing coin itu. Nama tidak peka huruf besar/kecil. Kosong = `{}` | `{ "E/ACC": 10, "COLLECTOOOR": 30 }` |
+| `trail.enabled` | `true` = sell pakai trailing stop (batas min profit dari `minProfit` / `tpCustom`). `false` = sell saat margin >= `minProfit` / `tpCustom` | `false` |
 | `trail.start` | Trailing mulai dihitung saat margin >= nilai ini (%) | `30` |
 | `trail.drop` | Sell kalau margin turun >= sekian POIN dari puncak (puncak 50, drop 10 -> sell di <= 40) | `10` |
 | `showDust` | `true` = buka list dust supaya posisi kecil ikut di-scan, `false` = dust ditutup / tidak di-scan | `true` |
