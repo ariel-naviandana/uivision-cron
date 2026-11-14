@@ -1,7 +1,7 @@
 # fomo-scanner
 
 Bot fomo.family: scan posisi di panel "Your positions" (halaman detail coin), sell saat TP / trailing stop dan average down (AD).
-Versi Playwright juga punya scanner buy: beli coin di watchlist saat market cap masuk range (lihat `docs/playwright.md`).
+Versi Playwright juga punya scanner buy: beli coin di watchlist saat market cap masuk range (lihat `docs/guidance.md`).
 Ada dua versi untuk sell/AD. Jangan jalankan keduanya bersamaan (akun fomo yang sama).
 
 | Versi | Jalankan | Config | Exe |
@@ -19,7 +19,8 @@ fomo-scanner/
 ├─ pw/                  versi Playwright (index, run, scanner = sell/AD, buyer = buy, browser, config, login, util)
 ├─ config/              config Playwright: general (jadwal, run, dryRun, output), sell-ad, buy, paths (selector), timing
 ├─ docs/
-│  ├─ playwright.md     pengaturan config/ dan format log
+│  ├─ playwright.md     dokumentasi Playwright versi lama (pw.config.json, tanpa buy)
+│  ├─ guidance.md       panduan versi sekarang: folder config/, scanner buy, format log
 │  └─ build-exe.md      cara build kedua exe
 ├─ build/               file perantara build exe (bundle .js, .blob, config SEA)
 ├─ uivision.config.json config scheduler UI.Vision (macroName, jadwal, kill Chrome)
