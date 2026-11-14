@@ -20,6 +20,7 @@ const { log, sleep, nowTs } = require('./util');
 const cfg = loadPwConfig();
 const RANDOM = String(cfg.restartMode).toLowerCase() === 'random';
 const hasSchedule = RANDOM || !!cfg.schedule;
+const sellAdEnabled = () => cfg.sellEnabled !== false || cfg.adEnabled !== false;
 
 // Restart acak: setelah setiap restart, jeda berikutnya diacak lagi
 function scheduleRandomRestart() {
@@ -47,7 +48,8 @@ async function ensureBrowser() {
     if (context) return;
     context = await openBrowser(cfg);
     page = context.pages()[0] || await context.newPage();
-    if (cfg.buyEnabled) buyPage = await context.newPage();
+    // Tab buy: tab baru kalau sell/AD juga jalan; kalau sell & AD mati, pakai tab pertama saja (1 tab)
+    if (cfg.buyEnabled) buyPage = sellAdEnabled() ? await context.newPage() : page;
     context.on('close', () => {
         context = null;
         page = null;
@@ -100,12 +102,12 @@ async function startRun(reason) {
         }
         await ensureBrowser();
         const jobs = [];
-        if (cfg.sellEnabled !== false || cfg.adEnabled !== false) {
+        if (sellAdEnabled()) {
             scanner = new FomoScanner(page, cfg);
             jobs.push(scanner.run().catch((e) => log(`Run sell/AD berhenti karena error: ${e.message}`, 'err')));
         }
         if (cfg.buyEnabled) {
-            if (!buyPage) buyPage = await context.newPage();
+            if (!buyPage) buyPage = sellAdEnabled() ? await context.newPage() : page;
             buyer = new BuyScanner(buyPage, cfg);
             jobs.push(buyer.run().catch((e) => log(`Run buy berhenti karena error: ${e.message}`, 'err')));
         }
