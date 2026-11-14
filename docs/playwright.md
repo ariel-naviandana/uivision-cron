@@ -41,7 +41,7 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 | `run.buy` | `true` = tab kedua dibuka untuk scanner buy (watchlist) | `false` |
 | `dryRun.sell` | `true` = sell berhenti sebelum klik konfirmasi Sell | `true` |
 | `dryRun.ad` | `true` = AD isi nominal tapi tidak klik Buy | `true` |
-| `dryRun.buy` | `true` = scanner buy isi nominal tapi tidak klik Buy | `true` |
+| `dryRun.buy` | `true` = scanner buy isi nominal tapi tidak klik Buy (coin tetap di-unstar) | `true` |
 | `profileName` | Nama profil fomo, dipakai sebagai `?r=` di URL | `"VagueCoralJay"` |
 | `startTokenUrl` | Halaman awal: detail coin apa saja (tanpa `?r=`). Dipakai kedua tab | `"https://fomo.family/tokens/base/0xcbada7..."` |
 | `browser.chromePath` | Lokasi chrome.exe | `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"` |
@@ -112,7 +112,7 @@ Kalau tombol Buy berubah jadi "Insufficient balance" (saldo tidak cukup), AD dib
 2. Coin yang ada di `config/buy.json -> coins`: market cap dibaca dari sidebar. Kalau di antara `mcapMin` dan `mcapMax`, buka detail coin.
 3. Cek ulang market cap di kotak Market cap halaman detail (MC di sidebar kadang glitch). Tidak masuk range -> batal (MCAP_TIDAK_COCOK), coin dilewati selama `mismatchCooldownMs`.
 4. Pilih tab Buy, isi `amount`, cek tombol "Buy <nama>" (minimum order / saldo kurang dicatat dan dilewati).
-5. `dryRun.buy: true` (di `general.json`) berhenti di sini. Kalau tidak, klik Buy lalu unstar coin supaya hilang dari watchlist.
+5. Klik Buy, lalu unstar coin supaya hilang dari watchlist. `dryRun.buy: true` (di `general.json`) hanya melewati klik Buy, unstar tetap jalan.
 6. Setiap coin diproses maksimal 1x per run (termasuk dry run), jadi tidak terbeli dua kali walau unstar gagal.
 7. Kalau tidak ada yang dibeli, tab standby di detail coin watchlist yang dipilih acak (`standbyRandom`), lalu menunggu `scanIntervalMs` +-30%.
 
@@ -120,5 +120,5 @@ Kalau tombol Buy berubah jadi "Insufficient balance" (saldo tidak cukup), AD dib
 - `fomo_positions.csv`: waktu, nama, nominal, margin
 - `fomo_sell_log.csv`: waktu, nama, nominal, margin, hasil (DRY_RUN_STOP / SOLD / SELL_GAGAL / MISMATCH / CLICK_GAGAL / SELL_MIN_ORDER)
 - `fomo_ad_log.csv`: waktu, nama, umur(jam), rsi, mc sekarang, mc avg entry, invested, hasil (LOLOS / TIDAK_LOLOS:... / DRY_RUN_STOP / BOUGHT / BUY_GAGAL / BUY_MISMATCH / BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / POPUP_MISMATCH)
-- `fomo_buy_log.csv`: waktu, nama, mcap sidebar, mcap detail, mcapMin, mcapMax, nominal, hasil (MCAP_TIDAK_COCOK / DRY_RUN_STOP / BOUGHT / BOUGHT_UNSTAR_GAGAL / BUY_GAGAL / BUY_MISMATCH / BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / DETAIL_MISMATCH)
+- `fomo_buy_log.csv`: waktu, nama, mcap sidebar, mcap detail, mcapMin, mcapMax, nominal, hasil (MCAP_TIDAK_COCOK / DRY_RUN_STOP / DRY_RUN_STOP_UNSTAR_GAGAL / BOUGHT / BOUGHT_UNSTAR_GAGAL / BUY_GAGAL / BUY_MISMATCH / BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / DETAIL_MISMATCH)
 - `fomo_trail.csv`: waktu, link coin, nama, puncak margin (`RESET` setelah SOLD atau AD BOUGHT). Dipakai trailing stop supaya puncak tetap tersimpan walau run/Chrome di-restart. Hapus file ini untuk reset semua puncak.

@@ -5,7 +5,7 @@
 // Sebelum Buy, market cap dicek ulang di halaman detail (kotak Market cap): sidebar kadang glitch.
 // Saat standby, tab pindah ke detail coin watchlist yang dipilih acak (lebih natural).
 // Log: fomo_buy_log.csv (waktu, nama, mcap sidebar, mcap detail, mcapMin, mcapMax, nominal, hasil)
-//   hasil: DRY_RUN_STOP / BOUGHT / BOUGHT_UNSTAR_GAGAL / BUY_GAGAL / BUY_MISMATCH /
+//   hasil: DRY_RUN_STOP / DRY_RUN_STOP_UNSTAR_GAGAL / BOUGHT / BOUGHT_UNSTAR_GAGAL / BUY_GAGAL / BUY_MISMATCH /
 //          BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / DETAIL_MISMATCH / MCAP_TIDAK_COCOK
 const { log, sleep, nowTs, money, appendCsv, rand, jitter } = require('./util');
 const { FomoScanner } = require('./scanner');
@@ -281,38 +281,39 @@ class BuyScanner {
             return;
         }
 
+        let result;
         if (this.b.dryRunBuy) {
-            log(`[BUY] DRY RUN: berhenti sebelum klik '${buyText}' (nominal $${c.amount})`, 'warn');
-            this.done.add(key);
-            this.logBuy(ts, c, mcap, 'DRY_RUN_STOP');
-            return;
-        }
-
-        try {
-            await this.x(this.sel.buyButton).first().click({ timeout: W.elementTimeoutMs });
-        } catch {
+            // dry run: hanya klik Buy yang dilewati, unstar tetap jalan
+            log(`[BUY] DRY RUN: tidak klik '${buyText}' (nominal $${c.amount}), lanjut unstar`, 'warn');
+            result = 'DRY_RUN_STOP';
+        } else {
+            try {
+                await this.x(this.sel.buyButton).first().click({ timeout: W.elementTimeoutMs });
+            } catch {
+                await sleep(W.afterActionMs);
+                log(`[BUY] BUY GAGAL: ${c.name} (tombol Buy tidak bisa diklik)`, 'err');
+                this.logBuy(ts, c, mcap, 'BUY_GAGAL');
+                return;
+            }
             await sleep(W.afterActionMs);
-            log(`[BUY] BUY GAGAL: ${c.name} (tombol Buy tidak bisa diklik)`, 'err');
-            this.logBuy(ts, c, mcap, 'BUY_GAGAL');
-            return;
+            log(`[BUY] BOUGHT: ${c.name} senilai $${c.amount} (MC ${mcap})`, 'ok');
+            result = 'BOUGHT';
         }
-        await sleep(W.afterActionMs);
         this.done.add(key);
-        log(`[BUY] BOUGHT: ${c.name} senilai $${c.amount} (MC ${mcap})`, 'ok');
 
-        let result = 'BOUGHT';
         if (this.b.unstarAfterBuy) {
             if (!this.sel.unstarButton) {
                 log('[BUY] selectors.unstarButton belum diisi, coin tidak di-unstar', 'warn');
-                result = 'BOUGHT_UNSTAR_GAGAL';
+                result += '_UNSTAR_GAGAL';
             } else {
                 try {
+                    await sleep(Math.round(rand(300, 1000)));
                     await this.x(this.sel.unstarButton).first().click({ timeout: W.clickTimeoutMs });
                     await sleep(1000);
                     log(`[BUY] ${c.name} di-unstar dari watchlist`, 'ok');
                 } catch {
                     log(`[BUY] ${c.name} gagal di-unstar, hapus manual dari watchlist`, 'err');
-                    result = 'BOUGHT_UNSTAR_GAGAL';
+                    result += '_UNSTAR_GAGAL';
                 }
             }
         }
