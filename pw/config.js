@@ -17,6 +17,11 @@ const DEFAULTS = {
     // Jadwal (padanan uivision.config.json versi UI.Vision)
     timezone: 'Asia/Jakarta',
     schedule: '*/15 * * * *', // cron mulai ulang run; '' = jalan terus tanpa jadwal
+    // restartMode: "cron" = restart run/Chrome sesuai schedule
+    //              "random" = restart setelah jeda acak restartMinMin - restartMaxMin menit (lebih natural)
+    restartMode: 'cron',
+    restartMinMin: 8,
+    restartMaxMin: 15,
     runOnStart: true,         // langsung jalan saat start, tidak menunggu jadwal pertama
     restartBrowser: true,     // tutup & buka ulang Chrome tiap jadwal (padanan killChrome)
     restartWaitMs: 3000,      // jeda setelah Chrome ditutup (padanan killWaitMs)
@@ -38,8 +43,10 @@ const DEFAULTS = {
     buy: {
         dryRunBuy: true,
         unstarAfterBuy: true,   // unstar coin dari watchlist setelah berhasil beli
-        scanIntervalMs: 10000,  // jeda antar scan watchlist
-        coins: [],              // [{ name, mcapMin, mcapMax, amount }]
+        scanIntervalMs: 10000,  // jeda antar scan watchlist (diberi variasi acak +-30%)
+        standbyRandom: true,    // saat standby, pindah ke detail coin watchlist yang dipilih acak
+        mismatchCooldownMs: 120000, // MC di detail tidak masuk range -> coin dilewati selama ini
+        coins: [],              // [{ name, mcapMin, mcapMax, amount }], mcap boleh "40.7K" / "2.32M" / angka
     },
     dryRunSell: true,
     dryRunAd: true,
@@ -180,8 +187,8 @@ function loadPwConfig() {
         .filter((c) => c && c.name)
         .map((c) => [String(c.name).trim().toLowerCase(), {
             name: String(c.name).trim(),
-            mcapMin: Number(c.mcapMin),
-            mcapMax: Number(c.mcapMax),
+            mcapMin: require('./util').money(c.mcapMin),   // "40.7K" -> 40700
+            mcapMax: require('./util').money(c.mcapMax),
             amount: Number(c.amount),
         }]));
     return cfg;

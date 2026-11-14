@@ -2,10 +2,12 @@
 // Coin di watchlist yang terdaftar di config/buy.json dicek market cap-nya (dibaca dari sidebar).
 // Kalau market cap masuk range [mcapMin, mcapMax] -> buka detail coin, beli sebesar amount,
 // lalu unstar supaya coin hilang dari watchlist (tidak terbeli dua kali).
-// Log: fomo_buy_log.csv (waktu, nama, mcap, mcapMin, mcapMax, nominal, hasil)
+// Sebelum Buy, market cap dicek ulang di halaman detail (kotak Market cap): sidebar kadang glitch.
+// Saat standby, tab pindah ke detail coin watchlist yang dipilih acak (lebih natural).
+// Log: fomo_buy_log.csv (waktu, nama, mcap sidebar, mcap detail, mcapMin, mcapMax, nominal, hasil)
 //   hasil: DRY_RUN_STOP / BOUGHT / BOUGHT_UNSTAR_GAGAL / BUY_GAGAL / BUY_MISMATCH /
-//          BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / DETAIL_MISMATCH
-const { log, sleep, nowTs, money, appendCsv } = require('./util');
+//          BUY_MIN_ORDER / BUY_SALDO_KURANG / CLICK_GAGAL / DETAIL_MISMATCH / MCAP_TIDAK_COCOK
+const { log, sleep, nowTs, money, appendCsv, rand, jitter } = require('./util');
 const { FomoScanner } = require('./scanner');
 
 // selector wajib di config/paths.json supaya scanner buy bisa jalan
@@ -23,6 +25,8 @@ class BuyScanner {
         this.sinceOpen = 0;
         this.done = new Set();   // coin yang sudah diproses di run ini (beli / dry run / gagal permanen)
         this.failMap = {};       // hitungan gagal-klik per coin
+        this.cooldown = {};      // coin yang MC detail-nya tidak cocok: dilewati sampai waktu ini
+        this.curDetail = -1;     // market cap di halaman detail (untuk log)
         this.total = 0;
         this.stopped = false;
         this.warnedMissing = false;
@@ -63,7 +67,7 @@ class BuyScanner {
     }
 
     logBuy(ts, c, mcap, result) {
-        appendCsv(this.out.dir, this.out.buyLogFile, [ts, c.name, mcap, c.mcapMin, c.mcapMax, c.amount, result]);
+        appendCsv(this.out.dir, this.out.buyLogFile, [ts, c.name, mcap, this.curDetail, c.mcapMin, c.mcapMax, c.amount, result]);
     }
 
     // ---------- Satu siklus scan watchlist ----------
@@ -130,6 +134,10 @@ class BuyScanner {
                     log(`[BUY] ${name} dilewati: gagal diklik >= ${this.cfg.clickFailMax} kali`, 'warn');
                     continue;
                 }
+                if ((this.cooldown[key] || 0) > Date.now()) {
+                    log(`[BUY] ${name} dilewati sementara: MC di detail sebelumnya tidak cocok`);
+                    continue;
+                }
 
                 // baris dicari ulang lewat link-nya: virtual list bisa merender ulang / menggeser urutan baris
                 const target = href ? this.x(`${this.sel.watchRow}[@href="${href}"]`).first() : row;
@@ -150,15 +158,43 @@ class BuyScanner {
         if (!acted) {
             log(`[BUY] Siklus #${this.total} | ${seen.size} coin di watchlist dicek`);
             if (seen.size === 0) this.needOpen = true;
+            else if (this.b.standbyRandom !== false) await this.standby();
         }
 
-        await this.wait(Number(this.b.scanIntervalMs) || 10000);
+        await this.wait(jitter(Number(this.b.scanIntervalMs) || 10000));
+    }
+
+    // ---------- Standby: pindah ke detail coin watchlist acak ----------
+    // Klik baris watchlist (bukan buka URL) supaya sidebar watchlist tetap terbuka.
+    async standby() {
+        const rows = this.x(this.sel.watchRow);
+        const n = await rows.count().catch(() => 0);
+        const cur = this.page.url();
+        const options = [];
+        for (let i = 0; i < n; i++) {
+            const href = await rows.nth(i).getAttribute('href', { timeout: 1000 }).catch(() => null);
+            if (href && !cur.includes(href.split('?')[0])) options.push(href);
+        }
+        if (!options.length) return;
+        const href = options[Math.floor(Math.random() * options.length)];
+        const row = this.x(`${this.sel.watchRow}[@href="${href}"]`).first();
+        const name = await this.text(row.locator(`xpath=${this.sel.watchRowName}`), 2000);
+        await sleep(Math.round(rand(400, 1500)));
+        try {
+            const target = this.sel.watchRowClick ? row.locator(`xpath=${this.sel.watchRowClick}`).first() : row;
+            await target.click({ timeout: this.cfg.wait.clickTimeoutMs });
+            log(`[BUY] Standby di ${name || href}`);
+            this.needOpen = false;
+        } catch {
+            /* tidak apa-apa, tetap di halaman sekarang */
+        }
     }
 
     // ---------- Beli satu coin ----------
     async doBuy(row, key, c, mcap) {
         const W = this.cfg.wait;
         const ts = nowTs();
+        this.curDetail = -1;
         log(`[BUY] ${c.name}: market cap ${mcap} masuk range, beli $${c.amount}`, 'ok');
 
         if (!(c.amount > 0)) {
@@ -171,6 +207,7 @@ class BuyScanner {
         // buka detail coin dari baris watchlist
         const href = await row.getAttribute('href', { timeout: 2000 }).catch(() => null)
             || await row.locator('xpath=.//a[contains(@href,"/tokens/")]').first().getAttribute('href', { timeout: 2000 }).catch(() => null);
+        await sleep(Math.round(rand(300, 1200)));
         let clicked = false;
         for (let t = 1; t <= this.cfg.clickTries && !clicked; t++) {
             try {
@@ -199,6 +236,18 @@ class BuyScanner {
             this.logBuy(ts, c, mcap, 'DETAIL_MISMATCH');
             return;
         }
+
+        // cek ulang market cap di halaman detail (MC di sidebar kadang glitch)
+        await this.x(this.sel.detailMarketCap).first().waitFor({ timeout: W.elementTimeoutMs }).catch(() => {});
+        this.curDetail = money(await this.text(this.x(this.sel.detailMarketCap), W.elementTimeoutMs));
+        if (!(this.curDetail > 0 && this.curDetail >= c.mcapMin && this.curDetail <= c.mcapMax)) {
+            log(`[BUY] ${c.name} dibatalkan: MC di detail ${this.curDetail} tidak masuk range ${c.mcapMin} - ${c.mcapMax} `
+                + `(sidebar ${mcap})`, 'warn');
+            this.cooldown[key] = Date.now() + (Number(this.b.mismatchCooldownMs) || 120000);
+            this.logBuy(ts, c, mcap, 'MCAP_TIDAK_COCOK');
+            return;
+        }
+        log(`[BUY] ${c.name}: MC di detail ${this.curDetail} cocok`, 'ok');
 
         // pastikan tab Buy aktif, isi nominal, baca tombol
         await this.x(this.sel.buyTab).first().click({ timeout: W.clickTimeoutMs }).catch(() => {});

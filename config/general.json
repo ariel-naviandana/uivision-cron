@@ -1,6 +1,9 @@
 {
   "timezone": "Asia/Jakarta",
   "schedule": "*/15 * * * *",
+  "restartMode": "cron",
+  "restartMinMin": 8,
+  "restartMaxMin": 15,
   "runOnStart": true,
   "restartBrowser": true,
   "restartWaitMs": 3000,

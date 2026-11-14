@@ -1,5 +1,6 @@
 // pw/run.js — Fomo scanner (sell TP & average down) versi Playwright
 // Pengganti macro UI.Vision fomo_scanner + scheduler index.js.
+//   restartMode : "cron" = mulai ulang run sesuai schedule, "random" = jeda acak restartMinMin-restartMaxMin menit
 //   schedule    : cron untuk memulai ulang run (padanan "schedule" di uivision.config.json).
 //                 Kosong ("") = satu run jalan terus tanpa jadwal.
 //   runOnStart  : langsung jalan saat start.
@@ -14,9 +15,24 @@ const { loadPwConfig } = require('./config');
 const { openBrowser } = require('./browser');
 const { FomoScanner } = require('./scanner');
 const { BuyScanner } = require('./buyer');
-const { log, sleep } = require('./util');
+const { log, sleep, nowTs } = require('./util');
 
 const cfg = loadPwConfig();
+const RANDOM = String(cfg.restartMode).toLowerCase() === 'random';
+const hasSchedule = RANDOM || !!cfg.schedule;
+
+// Restart acak: setelah setiap restart, jeda berikutnya diacak lagi
+function scheduleRandomRestart() {
+    const min = Math.max(1, Number(cfg.restartMinMin) || 8);
+    const max = Math.max(min, Number(cfg.restartMaxMin) || 15);
+    const ms = Math.round((min + Math.random() * (max - min)) * 60000);
+    const at = new Date(Date.now() + ms);
+    log(`Restart berikutnya dalam ${(ms / 60000).toFixed(1)} menit (acak ${min}-${max} menit), sekitar ${nowTs(at).slice(11)}`);
+    setTimeout(async () => {
+        await startRun('JADWAL ACAK');
+        scheduleRandomRestart();
+    }, ms);
+}
 
 let context = null;
 let page = null;
@@ -38,10 +54,10 @@ async function ensureBrowser() {
         buyPage = null;
         if (closing) return;
         log('Browser tertutup tanpa diminta. Dibuka ulang di jadwal berikutnya'
-            + (cfg.schedule ? '' : ' (tanpa jadwal: bot berhenti, jalankan ulang npm run pw)'), 'err');
+            + (hasSchedule ? '' : ' (tanpa jadwal: bot berhenti, jalankan ulang npm run pw)'), 'err');
         if (scanner) scanner.stopped = true;
         if (buyer) buyer.stopped = true;
-        if (!cfg.schedule) process.exit(1);
+        if (!hasSchedule) process.exit(1);
     });
 }
 
@@ -114,7 +130,7 @@ async function shutdown() {
     console.log('='.repeat(56));
     console.log('✅ FOMO SCANNER (Playwright) AKTIF');
     console.log(`   Halaman awal: ${cfg.startUrl}`);
-    console.log(`   Jadwal      : ${cfg.schedule || 'tanpa jadwal (jalan terus)'} | zona ${cfg.timezone}`);
+    console.log(`   Jadwal      : ${RANDOM ? `restart acak tiap ${cfg.restartMinMin}-${cfg.restartMaxMin} menit` : (cfg.schedule || 'tanpa jadwal (jalan terus)')} | zona ${cfg.timezone}`);
     console.log(`   Run saat start: ${cfg.runOnStart ? 'ya' : 'tidak'} | restart Chrome tiap jadwal: ${cfg.restartBrowser ? 'ya' : 'tidak'}`);
     console.log(`   Chrome      : ${cfg.browser.userDataDir} (headless: ${cfg.browser.headless ? 'ya' : 'tidak'})`);
     const t = cfg.trail;
@@ -128,7 +144,10 @@ async function shutdown() {
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
 
-    if (cfg.schedule) {
+    if (RANDOM) {
+        if (cfg.runOnStart) await startRun('STARTUP');
+        scheduleRandomRestart();
+    } else if (cfg.schedule) {
         if (!cron.validate(cfg.schedule)) {
             console.error(`Format cron tidak valid: "${cfg.schedule}"`);
             process.exit(1);

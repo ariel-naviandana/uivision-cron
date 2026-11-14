@@ -19,12 +19,16 @@ function log(msg, level = 'info') {
     console.log(`${COLORS[level] || ''}[${nowTs()}] ${msg}\x1b[0m`);
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// angka acak di antara min dan max
+const rand = (min, max) => min + Math.random() * (max - min);
+// ms +- pct (default 30%), supaya jeda tidak selalu sama persis
+const jitter = (ms, pct = 0.3) => Math.max(0, Math.round(ms * (1 + rand(-pct, pct))));
 
-// "$1.2K" / "27.6K" / "$350" -> angka. -1 kalau tidak terbaca (sama dengan macro)
+// "$1.2K" / "27.6K" / "$350" / 40700 -> angka. -1 kalau tidak terbaca (sama dengan macro)
 function money(text) {
-    const v = String(text ?? '').match(/\$?\s*([\d,.]+)\s*([KMB]?)/);
+    const v = String(text ?? '').match(/\$?\s*([\d,.]+)\s*([KMBT]?)/i);
     if (!v) return -1;
-    const mult = { K: 1e3, M: 1e6, B: 1e9 }[v[2]] || 1;
+    const mult = { K: 1e3, M: 1e6, B: 1e9, T: 1e12 }[v[2].toUpperCase()] || 1;
     const n = parseFloat(v[1].replace(/,/g, '')) * mult;
     return Number.isFinite(n) ? n : -1;
 }
@@ -60,4 +64,4 @@ function appendCsv(dir, file, values) {
     fs.appendFileSync(path.join(dir, file), values.map(cell).join(',') + '\n', 'utf8');
 }
 
-module.exports = { nowTs, log, sleep, money, margin, ageHours, appendCsv, setTimezone, getTimezone };
+module.exports = { nowTs, log, sleep, money, margin, ageHours, appendCsv, setTimezone, getTimezone, rand, jitter };
