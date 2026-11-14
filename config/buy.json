@@ -11,8 +11,8 @@
     },
     {
       "name": "CONTOHCOIN2",
-      "mcapMin": "50K",
-      "mcapMax": "100K",
+      "mcapMin": "1.1M",
+      "mcapMax": "1.2M",
       "amount": 10
     }
   ]

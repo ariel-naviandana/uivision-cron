@@ -25,7 +25,7 @@ class BuyScanner {
         this.sinceOpen = 0;
         this.done = new Set();   // coin yang sudah diproses di run ini (beli / dry run / gagal permanen)
         this.failMap = {};       // hitungan gagal-klik per coin
-        this.cooldown = {};      // coin yang MC detail-nya tidak cocok: dilewati sampai waktu ini
+        this.cooldown = {};      // coin yang dilewati sementara: { until, reason } (MC tidak cocok, saldo kurang, dll.)
         this.curDetail = -1;     // market cap di halaman detail (untuk log)
         this.total = 0;
         this.stopped = false;
@@ -134,8 +134,9 @@ class BuyScanner {
                     log(`[BUY] ${name} dilewati: gagal diklik >= ${this.cfg.clickFailMax} kali`, 'warn');
                     continue;
                 }
-                if ((this.cooldown[key] || 0) > Date.now()) {
-                    log(`[BUY] ${name} dilewati sementara: MC di detail sebelumnya tidak cocok`);
+                const cd = this.cooldown[key];
+                if (cd && cd.until > Date.now()) {
+                    log(`[BUY] ${name} dilewati sementara (${cd.reason}), dicoba lagi ${Math.ceil((cd.until - Date.now()) / 1000)} detik lagi`);
                     continue;
                 }
 
@@ -188,6 +189,11 @@ class BuyScanner {
         } catch {
             /* tidak apa-apa, tetap di halaman sekarang */
         }
+    }
+
+    // Coin dilewati sementara, dicoba lagi setelah ms (bukan dikunci sampai run berikutnya)
+    setCooldown(key, ms, reason) {
+        this.cooldown[key] = { until: Date.now() + ms, reason };
     }
 
     // ---------- Beli satu coin ----------
@@ -243,7 +249,7 @@ class BuyScanner {
         if (!(this.curDetail > 0 && this.curDetail >= c.mcapMin && this.curDetail <= c.mcapMax)) {
             log(`[BUY] ${c.name} dibatalkan: MC di detail ${this.curDetail} tidak masuk range ${c.mcapMin} - ${c.mcapMax} `
                 + `(sidebar ${mcap})`, 'warn');
-            this.cooldown[key] = Date.now() + (Number(this.b.mismatchCooldownMs) || 120000);
+            this.setCooldown(key, Number(this.b.mismatchCooldownMs) || 120000, 'MC detail tidak cocok');
             this.logBuy(ts, c, mcap, 'MCAP_TIDAK_COCOK');
             return;
         }
@@ -263,20 +269,21 @@ class BuyScanner {
             const minText = await this.text(this.x(this.sel.minOrderButton), 1500);
             if (minText) {
                 log(`[BUY] ${c.name} dibatalkan: nominal $${c.amount} di bawah minimum (${minText})`, 'warn');
-                this.done.add(key);
+                this.setCooldown(key, Number(this.b.retryCooldownMs) || 60000, 'di bawah minimum order');
                 this.logBuy(ts, c, mcap, 'BUY_MIN_ORDER');
                 return;
             }
             const balText = await this.text(this.x(this.sel.insufficientButton), 1500);
             if (balText) {
                 log(`[BUY] ${c.name} dibatalkan: saldo tidak cukup untuk beli $${c.amount}`, 'warn');
-                this.done.add(key);
+                this.setCooldown(key, Number(this.b.retryCooldownMs) || 60000, 'saldo kurang');
                 this.logBuy(ts, c, mcap, 'BUY_SALDO_KURANG');
                 return;
             }
         }
         if (!FomoScanner.actionMatch(buyText, 'Buy', c.name)) {
             log(`[BUY] Tombol buy tidak cocok (${buyText}), ${c.name} dibatalkan`, 'err');
+            this.setCooldown(key, Number(this.b.retryCooldownMs) || 60000, 'tombol Buy tidak cocok');
             this.logBuy(ts, c, mcap, 'BUY_MISMATCH');
             return;
         }

@@ -97,6 +97,7 @@ Dibaca dari folder project (atau folder exe). Kalau folder `config/` tidak ada, 
 | `scanIntervalMs` | Jeda (ms) antar scan sell/AD kalau tidak ada aksi | `6000` |
 | `buyScanIntervalMs` | Jeda (ms) antar scan watchlist (scanner buy), diberi variasi acak +-30% | `10000` |
 | `buyMismatchCooldownMs` | Buy: MC di halaman detail tidak masuk range (sidebar glitch) -> coin dilewati selama ini (ms) | `120000` |
+| `buyRetryCooldownMs` | Buy: saldo kurang / di bawah minimum order / tombol Buy tidak cocok -> coin dicoba lagi setelah ini (ms) | `60000` |
 | `reloadEvery` | Reload halaman paksa tiap N scan | `4` |
 | `clickTries` | Percobaan klik icon coin | `3` |
 | `clickFailMax` | Coin di-skip otomatis kalau gagal diklik sebanyak ini (selama satu run) | `3` |
@@ -115,7 +116,7 @@ Kalau tombol Buy berubah jadi "Insufficient balance" (saldo tidak cukup), AD dib
 3. Cek ulang market cap di kotak Market cap halaman detail (MC di sidebar kadang glitch). Tidak masuk range -> batal (MCAP_TIDAK_COCOK), coin dilewati selama `buyMismatchCooldownMs` (timing.json).
 4. Pilih tab Buy, isi `amount`, cek tombol "Buy <nama>" (minimum order / saldo kurang dicatat dan dilewati).
 5. Klik Buy, lalu unstar coin supaya hilang dari watchlist. `dryRun.buy: true` (di `general.json`) hanya melewati klik Buy. Unstar saat dry run diatur `unstarOnDryRun`.
-6. Setiap coin diproses maksimal 1x per run (termasuk dry run), jadi tidak terbeli dua kali walau unstar gagal.
+6. Coin yang sudah dibeli (atau dry run) diproses maksimal 1x per run, jadi tidak terbeli dua kali walau unstar gagal. Saldo kurang / minimum order / tombol tidak cocok tidak dikunci: dicoba lagi setelah `buyRetryCooldownMs`.
 7. Kalau tidak ada yang dibeli, tab standby di detail coin watchlist yang dipilih acak (`standbyRandom`), lalu menunggu `buyScanIntervalMs` (timing.json) +-30%.
 
 ## Log (format sama dengan macro)

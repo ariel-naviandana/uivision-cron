@@ -47,6 +47,7 @@ const DEFAULTS = {
         scanIntervalMs: 10000,  // jeda antar scan watchlist (diberi variasi acak +-30%)
         standbyRandom: true,    // saat standby, pindah ke detail coin watchlist yang dipilih acak
         mismatchCooldownMs: 120000, // MC di detail tidak masuk range -> coin dilewati selama ini
+        retryCooldownMs: 60000,     // saldo kurang / minimum order / tombol tidak cocok -> dicoba lagi setelah ini
         coins: [],              // [{ name, mcapMin, mcapMax, amount }], mcap boleh "40.7K" / "2.32M" / angka
     },
     dryRunSell: true,
@@ -153,9 +154,10 @@ function readUserConfig() {
     }
     const [general, sellAd, buy, paths, timingAll] = CONFIG_FILES.map((f) => readJson(path.join(dir, f)));
     // timing.json: jeda khusus buy dipetakan ke cfg.buy
-    const { buyScanIntervalMs, buyMismatchCooldownMs, ...timing } = timingAll;
+    const { buyScanIntervalMs, buyMismatchCooldownMs, buyRetryCooldownMs, ...timing } = timingAll;
     if (buyScanIntervalMs !== undefined) buy.scanIntervalMs = buyScanIntervalMs;
     if (buyMismatchCooldownMs !== undefined) buy.mismatchCooldownMs = buyMismatchCooldownMs;
+    if (buyRetryCooldownMs !== undefined) buy.retryCooldownMs = buyRetryCooldownMs;
     const { run, dryRun, ...gen } = general;
     const user = { ...gen, ...sellAd, ...paths, ...timing };
     if (run) {
